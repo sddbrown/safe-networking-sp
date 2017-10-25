@@ -3,7 +3,7 @@ from flask_elasticsearch import FlaskElasticsearch
 
 app = Flask(__name__)
 
-app.config.from_pyfile('config.py')
+app.config.from_pyfile('instance/config.py')
 
 db = FlaskElasticsearch(app)
 

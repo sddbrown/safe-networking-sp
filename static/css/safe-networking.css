@@ -87,7 +87,8 @@ header#main ul li a:hover {
 }
 
 #main-dropdown #brand-area p {
-  font-size: 22px;
+  font-size: 18px;
+  font-weight: 600;
   color: #fff;
   line-height: 60px;
   margin-left: 33px;
@@ -187,6 +188,7 @@ main {
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
 }
 
 main iframe {

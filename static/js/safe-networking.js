@@ -146,7 +146,7 @@ var Dropdown = (function(_React$Component) {
           React.createElement(
             "div",
             { id: "brand-area" },
-            React.createElement("p", null, "Safe Networking"),
+            React.createElement("p", null, "SAFENETWORKING"),
             React.createElement(
               "div",
               { id: "brand-area-arrow", className: isActive && "active" },
@@ -237,7 +237,7 @@ var MainContent = function MainContent() {
     "main",
     null,
     React.createElement("iframe", {
-      src: "https://www.warnerbros.com/archive/spacejam/movie/jam.html"
+      src: "http://localhost:5601/app/kibana#/dashboard/AV8hRiO321JUDssTBFEH?embed=true&_g=(refreshInterval%3A(display%3AOff%2Cpause%3A!f%2Cvalue%3A0)%2Ctime%3A(from%3A'2016-10-24T01%3A14%3A04.450Z'%2Cmode%3Aabsolute%2Cto%3A'2017-10-24T01%3A29%3A04.451Z'))"
     })
   );
 };
@@ -354,7 +354,7 @@ var Dropdown = (function(_React$Component) {
           React.createElement(
             "div",
             { id: "brand-area" },
-            React.createElement("p", null, "Safe Networking"),
+            React.createElement("p", null, "SAFENETWORKING"),
             React.createElement(
               "div",
               { id: "brand-area-arrow", className: isActive && "active" },
@@ -445,7 +445,7 @@ var MainContent = function MainContent() {
     "main",
     null,
     React.createElement("iframe", {
-      src: "https://www.warnerbros.com/archive/spacejam/movie/jam.html"
+      src: "http://localhost:5601/app/kibana#/dashboard/AV8hRiO321JUDssTBFEH?embed=true&_g=(refreshInterval%3A(display%3AOff%2Cpause%3A!f%2Cvalue%3A0)%2Ctime%3A(from%3A'2016-10-24T01%3A14%3A04.450Z'%2Cmode%3Aabsolute%2Cto%3A'2017-10-24T01%3A29%3A04.451Z'))"
     })
   );
 };
@@ -562,7 +562,7 @@ var Dropdown = (function(_React$Component) {
           React.createElement(
             "div",
             { id: "brand-area" },
-            React.createElement("p", null, "Safe Networking"),
+            React.createElement("p", null, "SAFENETWORKING"),
             React.createElement(
               "div",
               { id: "brand-area-arrow", className: isActive && "active" },
@@ -653,7 +653,7 @@ var MainContent = function MainContent() {
     "main",
     null,
     React.createElement("iframe", {
-      src: "https://www.warnerbros.com/archive/spacejam/movie/jam.html"
+      src: "http://localhost:5601/app/kibana#/dashboard/AV8hRiO321JUDssTBFEH?embed=true&_g=(refreshInterval%3A(display%3AOff%2Cpause%3A!f%2Cvalue%3A0)%2Ctime%3A(from%3A'2016-10-24T01%3A14%3A04.450Z'%2Cmode%3Aabsolute%2Cto%3A'2017-10-24T01%3A29%3A04.451Z'))"
     })
   );
 };
@@ -767,7 +767,7 @@ var Dropdown = (function(_React$Component) {
           React.createElement(
             "div",
             { id: "brand-area" },
-            React.createElement("p", null, "Safe Networking"),
+            React.createElement("p", null, "SAFENETWORKING"),
             React.createElement(
               "div",
               { id: "brand-area-arrow", className: isActive && "active" },
@@ -858,7 +858,7 @@ var MainContent = function MainContent() {
     "main",
     null,
     React.createElement("iframe", {
-      src: "https://www.warnerbros.com/archive/spacejam/movie/jam.html"
+      src: "http://localhost:5601/app/kibana#/dashboard/AV8hRiO321JUDssTBFEH?embed=true&_g=(refreshInterval%3A(display%3AOff%2Cpause%3A!f%2Cvalue%3A0)%2Ctime%3A(from%3A'2016-10-24T01%3A14%3A04.450Z'%2Cmode%3Aabsolute%2Cto%3A'2017-10-24T01%3A29%3A04.451Z'))"
     })
   );
 };
