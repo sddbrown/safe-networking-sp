@@ -1,27 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    
+
     <!-- Default title -->
     {% block title %}
     <title>SafeNetworking - Palo Alto Networks</title>
     {% endblock %}
-    
-     <!-- Custom styles for this template -->
-     <link href="{{ url_for('static', filename='css/reset.css') }}" rel="stylesheet">
-     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">     
-     <link href="{{ url_for('static', filename='css/safe-networking.css') }}" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="{{ url_for('static', filename='css/reset.css') }}" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/safe-networking.css') }}" rel="stylesheet">
 
 </head>
+
 <body>
-    <div id="app"></div>
+    <div id="react-app-mount"></div>
+    <div id="iframe-container">
+        {% block content %}{% endblock %}
+    </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.5.0/react.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.6.1/react-dom.js"></script>
     <script src="{{ url_for('static', filename='js/safe-networking.js')}}"></script>
-    
+
 </body>
+
 </html>

@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "babel client -o client/build/index.js"
+    "build": "babel client -w -o static/js/safe-networking.js"
   },
   "repository": {
     "type": "git",
