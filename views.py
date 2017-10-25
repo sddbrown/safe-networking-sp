@@ -18,8 +18,8 @@ def dashboard():
 
 @app.route('/domains')
 def domains():
-    return render_template('shorts.html')
+    return render_template('domains.html')
 
 @app.route('/iot')
 def iot():
-    return render_template('shorts.html')
+    return render_template('iot.html')
