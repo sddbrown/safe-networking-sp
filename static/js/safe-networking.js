@@ -50,7 +50,7 @@ var Dropdown = function (_React$Component) {
           React.createElement(
             "p",
             null,
-            "Safe Networking"
+            "SAFENETWORKING"
           ),
           React.createElement(
             "div",
