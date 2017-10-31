@@ -15,7 +15,8 @@ def login():
 
 @sfn_blueprint.route('/dashboard')
 def dashboard():
-    return render_template('dashboard.html', KIBANA_HOST=current_app.config["KIBANA_HOST"])
+    return render_template('dashboard.html', 
+                            KIBANA_HOST=current_app.config["KIBANA_HOST"])
 
 @sfn_blueprint.route('/domains')
 def domains():
