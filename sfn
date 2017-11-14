@@ -1,0 +1,25 @@
+#!/usr/bin/env python3.6
+'''
+ The purpose of SafeNetworking is to provided extended, API driven reporting
+ of known malicious behavior and malware for any device within a network.  
+ SafeNetwork is initially intended for the Service Provider market as it is able
+ to show providers what malware and other malicious software is using C&C 
+ channels to alert external systems that they are, indeed, intact and 
+ functioning
+'''
+
+import unittest
+from flask_script import Manager
+from project import create_app
+from flask_elasticsearch import FlaskElasticsearch
+
+app = create_app()
+mgr = Manager(app)
+
+db = FlaskElasticsearch(app)
+
+
+from project.api.views import *
+
+if __name__ == '__main__':
+    app.run(host="0.0.0.0")
