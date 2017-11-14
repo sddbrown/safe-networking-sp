@@ -160,6 +160,13 @@ Start Kibana
     sudo /bin/systemctl start kibana.service
 
 
+
+Check to make sure Kibana is running by opening this link on the server: http://localhost:5601
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+*If you see the Kibana UI, Kibana is now up and running*
+
+
 LOGSTASH CONFIGURATION AND STARTUP
 ==================================
 
