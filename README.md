@@ -1,5 +1,6 @@
-# safe-networking-sp
-
+# Read the installation and setup instructions if you do not have and ElasticStack cluster to work from (i.e. ElasticCloud)
+[Setup Instructions](docs/setup.md)
+# Start the SafeNetworking Application
 ###### 1. Clone repo
 git clone git@github.com:sdndude/safe-networking-sp.git
 
