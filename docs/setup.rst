@@ -132,6 +132,8 @@ You should get JSON similar to the following:
 
 *If you see JSON similar to the above, Elasticsearch is now up and
 running* 
+|
+|
 
 KIBANA CONFIGURATION AND STARTUP
 ================================
@@ -162,11 +164,11 @@ Start Kibana
 **NOTE:** The above commands provide no feedback as to whether Kibana was started successfully or not. Instead, this information will be written in the log files located in /var/log/kibana
 
 Check to make sure Kibana is running by opening this link on the server: http://localhost:5601
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 *If you see the Kibana UI, Kibana is now up and running*
 
-
+|
+|
 LOGSTASH CONFIGURATION AND STARTUP
 ==================================
 
