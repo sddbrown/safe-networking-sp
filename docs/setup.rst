@@ -134,56 +134,60 @@ You should get JSON similar to the following:
 running* 
 
 
-# KIBANA CONFIGURATION AND STARTUP
-#### Edit the kibana config file elasticsearch.url setting (it is commented out in the file)
-/etc/kibana/kibana.yml 
-</br>
+KIBANA CONFIGURATION AND STARTUP
+================================
 
-<span style="color:cyan">
-     elasticsearch.url:
-</span>
-<span style="color:orange"> 
-      "http://localhost:9200"
-</span>
-</br>
+Edit the elasticsearch.url setting (it is commented out) in the kibana config file /etc/kibana/kibana.yml
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-#### Configure Kibana to start with the system
-```
-sudo /bin/systemctl daemon-reload
-sudo /bin/systemctl enable kibana.service
-```
+.. code:: python
 
-#### Start Kibana
-```
-sudo /bin/systemctl start kibana.service
-```
+    elasticsearch.url:"http://localhost:9200"
 
-##### NOTE: The above commands provide no feedback as to whether Kibana was started successfully or not. Instead, this information will be written in the log files located in /var/log/kibana
+Configure Kibana to start with the system
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-#### Check to make sure Kibana is running by opening this link on the server: http://localhost:5601
+::
+
+    sudo /bin/systemctl daemon-reload
+    sudo /bin/systemctl enable kibana.service
+
+Start Kibana
+^^^^^^^^^^^^
+
+::
+
+    sudo /bin/systemctl start kibana.service
+
+NOTE: The above commands provide no feedback as to whether Kibana was started successfully or not. Instead, this information will be written in the log files located in /var/log/kibana
+''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
+Check to make sure Kibana is running by opening this link on the server: http://localhost:5601
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 *If you see the Kibana UI, Kibana is now up and running*
-</br>
-</br>
 
+LOGSTASH CONFIGURATION AND STARTUP
+==================================
 
-# LOGSTASH CONFIGURATION AND STARTUP
-#### Edit the logstash startup.options file LS_USER setting (it is set to the user logstash by default)
-/etc/logstash/startup.options 
-</br>
+Edit the LS_USER setting (it is logstash by default) in the logstash startup.options file /etc/logstash/startup.options
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-<span style="color:cyan">
-     LS_USER:
-</span>
-<span style="color:orange"> 
-      root
-</span>
-</br>
+.. code:: python
 
-#### Configure Kibana to start with the system
+    LS_USER=root
+
+Configure Logstash to start with the system
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+::
+
      sudo /bin/systemctl daemon-reload
      sudo /bin/systemctl enable logstash.service
 
-#### Start Kibana
-     sudo /bin/systemctl start kibana.service
+Start Logstash
+^^^^^^^^^^^^^^
 
+::
+
+     sudo /bin/systemctl start logstash.service
