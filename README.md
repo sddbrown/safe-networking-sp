@@ -1,4 +1,4 @@
-# Read the installation and setup instructions if you do not have and ElasticStack cluster to work from (i.e. ElasticCloud or a local install)
+# Read the Setup Instructions if you do not have and ElasticStack cluster to work from<br/>(i.e. ElasticCloud or a local install)
 [Setup Instructions](docs/setup.md)
 # Start the SafeNetworking Application
 ###### 1. Clone repo
