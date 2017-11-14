@@ -151,18 +151,3 @@ Configure Kibana to start with the system
     sudo /bin/systemctl daemon-reload
     sudo /bin/systemctl enable kibana.service
 
-Start Kibana
-^^^^^^^^^^^^
-
-::
-
-    sudo /bin/systemctl start kibana.service
-
-NOTE: The above commands provide no feedback as to whether Kibana was started successfully or not. Instead, this information will be written in the log files located in /var/log/kibana
-''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-
-Check to make sure Kibana is running by opening this link on the server: http://localhost:5601
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-*If you see the Kibana UI, Kibana is now up and running*
-
