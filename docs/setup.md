@@ -1,4 +1,6 @@
-# safe-networking-sp
+### Use the following instructions to install and deploy the ElasticStack to an<br>Ubuntu 16.04 system.  
+
+
 # SYSTEM SETUP 
 </br>
 
@@ -62,15 +64,10 @@ sudo apt-get update && sudo apt-get install default-jdk
 
 # ELASTICSEARCH CONFIGURATION AND STARTUP
 
-#### Edit the elasticsearch config file network.host setting (it is commented out in the file)
-/etc/elasticsearch/elasticsearch.yml </br>
-
-<span style="color:cyan">
-     network.host:
-</span>
-<span style="color:orange"> 
-      0.0.0.0
-</span>
+#### Edit the network.host setting (it is commented out) elasticsearch config file /etc/elasticsearch/elasticsearch.yml </br>
+```json
+network.host: 0.0.0.0
+```
 </br>
 
 #### Configure Elasticsearch to start with the system
@@ -84,12 +81,12 @@ sudo /bin/systemctl enable elasticsearch.service
 sudo /bin/systemctl start elasticsearch.service
 ```
 
-#### Check to make sure Elasticsearch is running
+#### Verify Elasticsearch is running by issuing this at the command prompt
 ```
-curl 127.0.0.1:9200
+# curl 127.0.0.1:9200
 ```
 #### You should get JSON similar to the following:
-```
+```json
 {
   "name" : "jeXSgYs",
   "cluster_name" : "elasticsearch",
@@ -110,16 +107,11 @@ curl 127.0.0.1:9200
 
 
 # KIBANA CONFIGURATION AND STARTUP
-#### Edit the kibana config file elasticsearch.url setting (it is commented out in the file)
-/etc/kibana/kibana.yml 
+#### Edit the elasticsearch.url setting (it is commented out) in the kibana config file /etc/kibana/kibana.yml 
 </br>
-
-<span style="color:cyan">
-     elasticsearch.url:
-</span>
-<span style="color:orange"> 
-      "http://localhost:9200"
-</span>
+```json
+     elasticsearch.url:\"http://localhost:9200\"
+```
 </br>
 
 #### Configure Kibana to start with the system
@@ -143,16 +135,10 @@ sudo /bin/systemctl start kibana.service
 
 
 # LOGSTASH CONFIGURATION AND STARTUP
-#### Edit the logstash startup.options file LS_USER setting (it is set to the user logstash by default)
-/etc/logstash/startup.options 
-</br>
-
-<span style="color:cyan">
-     LS_USER:
-</span>
-<span style="color:orange"> 
-      root
-</span>
+#### Edit the LS_USER setting (it is logstash by default) in the logstash startup.options file /etc/logstash/startup.options 
+```python
+LS_USER=root
+```
 </br>
 
 #### Configure Logstash to start with the system
