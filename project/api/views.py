@@ -1,7 +1,8 @@
 from flask import Blueprint, jsonify, request, render_template, current_app
+from flask import flash
 #from models import Member
 #from forms import LoginForm
-#from flask import render_template
+
 
 sfn_blueprint = Blueprint('sfn', __name__, template_folder='./templates')
 @sfn_blueprint.route('/')
@@ -16,6 +17,9 @@ def login():
 @sfn_blueprint.route('/dashboard')
 def dashboard():
     # Create the URL for Kibana using the config options set at runtime
+    flash('Here is a test', 'error')
+    flash('Here is a test', 'warning')
+    flash('Here is a test', 'info')
     KIBANA_URL = "{0}:{1}".format(current_app.config["KIBANA_HOST"],
                                   current_app.config["KIBANA_PORT"])
     return render_template('dashboard.html',kibana_host=KIBANA_URL)

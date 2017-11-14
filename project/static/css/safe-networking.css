@@ -220,3 +220,48 @@ main iframe {
   width: 100%;
   height: 100%;
 }
+
+
+/* Added to enable Flask-Flash alerts */
+.fade.in {
+  opacity: 1;
+}
+
+.alert-error {
+  color: #ffffff;
+  background-color: #cf464f;
+  border-color: #ce2029;
+}
+.alert-warning {
+  color: #000000;
+  background-color: #fbff00;
+  border-color: #fbff00;
+}
+.alert-info {
+  color: #000000;
+  background-color: #00ff37;
+  border-color: #00ff37;
+}
+.alert {
+  padding: 15px;
+  margin-bottom: 20px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+}
+.fade {
+  opacity: 0;
+  -webkit-transition: opacity .15s linear;
+  -o-transition: opacity .15s linear;
+  transition: opacity .15s linear;
+}
+.close {
+  float: right;
+  font-size: 21px;
+  font-weight: 700;
+  line-height: 1;
+  color: #000;
+  text-shadow: 0 1px 0 #fff;
+  filter: alpha(opacity=20);
+  opacity: .2;
+}
+/* End Flask-Flash alert settings */

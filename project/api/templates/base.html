@@ -25,27 +25,55 @@
         <style>
             body {
                   background-color: #333333;
+                  
             }
         </style>
         <br/>
     </div>
-    
-    <!-- This is where the pages will be loaded via flask but first show any errors -->
-    <div id="iframe-container">
-            
-        {% with messages = get_flashed_messages() %}
-            {% if messages %}
-                {% for message in messages %}                      
-                    <div class="alert alert-error"> 
-                       <a href='#' class="close" data-dismiss="alert" aria-label="close"></a>
-                       <strong>{{ message }}</strong>
+
+    <!-- Run through all flash messages sent to be populated on the next page rendered -->
+    <div>
+        <!-- ERROR Messages -->
+        {% with errors = get_flashed_messages(category_filter=["error"]) %}
+            {% if errors %}
+                {% for message in errors %}                      
+                    <div class="alert alert-error data-dismiss=alert alert-dismissible"> 
+                    <a href='#' class="close" data-dismiss="alert" aria-label="close">x</a>
+                    <strong>ERROR: </strong>{{ message }}
+                    </div>     
+                {% endfor %}
+            {% endif %}
+        {% endwith %} 
+
+        <!-- WARNING Messages -->
+        {% with warnings = get_flashed_messages(category_filter=["warning"]) %}
+            {% if warnings %}
+                {% for message in warnings %}                      
+                    <div class="alert alert-warning data-dismiss=alert alert-dismissible"> 
+                        <a href='#' class="close">x</a>
+                        <strong>WARNING: </strong>{{ message }}
                     </div>     
                 {% endfor %}
             {% endif %}
         {% endwith %}
 
+        <!-- INFO Messages -->
+        {% with infomsgs = get_flashed_messages(category_filter=["info"]) %}
+            {% if infomsgs %}
+                {% for message in infomsgs %}                      
+                    <div class="alert alert-info data-dismiss=alert alert-dismissible"> 
+                        <a href='#' class="close" data-dismiss="alert" aria-label="close">x</a>
+                        <strong>INFO: </strong>{{ message }}
+                    </div>     
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- Load the proper template here -->
+    <div id="iframe-container">
         {% block content %}
-        {% endblock %}
+        {% endblock content%}
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.5.0/react.js"></script>
