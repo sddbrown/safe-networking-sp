@@ -83,7 +83,7 @@ sudo /bin/systemctl start elasticsearch.service
 
 #### Verify Elasticsearch is running by issuing this at the command prompt
 ```
-# curl 127.0.0.1:9200
+curl 127.0.0.1:9200
 ```
 #### You should get JSON similar to the following:
 ```json
