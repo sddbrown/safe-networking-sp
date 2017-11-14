@@ -151,3 +151,36 @@ Configure Kibana to start with the system
     sudo /bin/systemctl daemon-reload
     sudo /bin/systemctl enable kibana.service
 
+
+Start Kibana
+^^^^^^^^^^^^
+
+::
+
+    sudo /bin/systemctl start kibana.service
+
+
+LOGSTASH CONFIGURATION AND STARTUP
+==================================
+
+Edit the LS_USER setting (it is logstash by default) in the logstash startup.options file /etc/logstash/startup.options
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code:: python
+
+    LS_USER=root
+
+Configure Logstash to start with the system
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+::
+
+     sudo /bin/systemctl daemon-reload
+     sudo /bin/systemctl enable logstash.service
+
+Start Logstash
+^^^^^^^^^^^^^^
+
+::
+
+     sudo /bin/systemctl start logstash.service
