@@ -20,8 +20,32 @@
 
 <body>
     <div id="react-app-mount"></div>
+    
+    <div>
+        <style>
+            body {
+                  background-color: #333333;
+            }
+        </style>
+        <br/>
+    </div>
+    
+    <!-- This is where the pages will be loaded via flask but first show any errors -->
     <div id="iframe-container">
-        {% block content %}{% endblock %}
+            
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}                      
+                    <div class="alert alert-error"> 
+                       <a href='#' class="close" data-dismiss="alert" aria-label="close"></a>
+                       <strong>{{ message }}</strong>
+                    </div>     
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}
+        {% endblock %}
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react/15.5.0/react.js"></script>

@@ -9,12 +9,12 @@
 '''
 
 import unittest
-from flask_script import Manager
+#from flask_script import Manager
 from project import create_app
 from flask_elasticsearch import FlaskElasticsearch
 
 app = create_app()
-mgr = Manager(app)
+#mgr = Manager(app)
 
 db = FlaskElasticsearch(app)
 
