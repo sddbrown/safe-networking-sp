@@ -2,23 +2,30 @@
 
 import os
 import datetime
+import threading
+import atexit
 from flask import Flask, jsonify
-#from flask_sqlalchemy import SQLAlchemy
+from pprint import pprint as pp
+
 
 
 def create_app():
     ''' 
     Returns the SafeNetworking application.
-    Configuration settings come from the project/instance/config.py file. 
+    Configuration settings come from the main level config.py file
+    and are superseded by project/instance/config.py file. 
     Registers all blueprints within the app itself 
     '''
 
     # instantiate the app
     app = Flask(__name__)
     
-    # set config
-    app.config.from_pyfile('instance/config.py')
+    # set config parameters
+    app.config.from_pyfile('config')
+    app.config.from_pyfile('instance/sfn.cfg')
 
+    pp(app.config)
+    
 
     # set up extensions
     # db.init_app(app)
