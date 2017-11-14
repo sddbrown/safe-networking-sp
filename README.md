@@ -1,20 +1,23 @@
-# Read the installation and setup instructions if you do not have and ElasticStack cluster to work from (i.e. ElasticCloud)
+# Read the installation and setup instructions if you do not have and ElasticStack cluster to work from (i.e. ElasticCloud or a local install)
 [Setup Instructions](docs/setup.md)
 # Start the SafeNetworking Application
 ###### 1. Clone repo
 git clone git@github.com:sdndude/safe-networking-sp.git
 
-###### 2. Create python 3.6 virtualenv (install python 3.6 if you do not have it)
+###### 2. Change into repo directory
+$ cd safe-networking-sp
+
+###### 3. Create python 3.6 virtualenv (install python 3.6 if you do not have it)
 $ python3.6 -m venv env
 
-###### 3. Active virtualenv
+###### 4. Active virtualenv
 $ source env/bin/activate
-
-###### 4. Change into repo directory
-$ cd safe-networking-sp
 
 ###### 5. Download required libraries
 $ pip install -r requirements.txt
 
-###### 6. Start the portal
-$ python ./myapp.py
+###### 6. Edit instance/sfn.cfg for your installation
+[Configuring SafeNetworking]
+
+###### 7. Start the portal
+$ python ./sfn
