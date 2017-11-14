@@ -108,9 +108,8 @@ sudo /bin/systemctl start elasticsearch.service
 
 # KIBANA CONFIGURATION AND STARTUP
 #### Edit the elasticsearch.url setting (it is commented out) in the kibana config file /etc/kibana/kibana.yml 
-</br>
-```json
-     elasticsearch.url:\"http://localhost:9200\"
+```python
+elasticsearch.url:"http://localhost:9200"
 ```
 </br>
 
