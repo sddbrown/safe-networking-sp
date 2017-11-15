@@ -1,4 +1,4 @@
-# Read the installation and setup instructions if you do not have and ElasticStack cluster to work from (i.e. ElasticCloud or a local install)
+# Read the Setup Instructions if you do not have an ElasticStack cluster (i.e. ElasticCloud or a local install)
 [Setup Instructions](docs/setup.md)
 # Start the SafeNetworking Application
 ###### 1. Clone repo
@@ -17,7 +17,7 @@ $ source env/bin/activate
 $ pip install -r requirements.txt
 
 ###### 6. Edit instance/sfn.cfg for your installation
-[Configuring SafeNetworking]
+[Configuring SafeNetworking](docs/sfn-config.rst)
 
 ###### 7. Start the portal
 $ python ./sfn
