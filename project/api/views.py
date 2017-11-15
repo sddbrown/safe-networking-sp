@@ -1,7 +1,6 @@
 from flask import Blueprint, jsonify, request, render_template, current_app
 from flask import flash
-#from models import Member
-#from forms import LoginForm
+
 
 
 sfn_blueprint = Blueprint('sfn', __name__, template_folder='./templates')
