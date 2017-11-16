@@ -16,6 +16,7 @@ SECRET_KEY = "sfn123"
 BASE_DIR = os.path.abspath(os.path.dirname(__file__)) 
 POOL_TIME = 5    #seconds 
 LOG_LEVEL = "WARNING"
+INIT_QUERY_SIZE = 1000
 
 # ELASTICSTACK
 ELASTICSEARCH_HOST = "localhost"

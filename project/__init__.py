@@ -6,8 +6,8 @@ import datetime
 import threading
 import atexit
 import logging
+import pprint
 from flask import Flask, jsonify
-from pprint import pprint as pp
 from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import TransportError
 from logging.handlers import RotatingFileHandler
@@ -35,13 +35,13 @@ def create_app():
     # Set up logging for the application - we may want to revisit this (see #10)
    
     handler = RotatingFileHandler('log/sfn.log', 
-                                   maxBytes=10000, 
+                                   maxBytes=10000000, 
                                    backupCount=10)
     logFormat = logging.Formatter('[%(asctime)s][%(levelname)s][%(name)s] - %(message)s')
     handler.setLevel(app.config["LOG_LEVEL"])
     handler.setFormatter(logFormat)
     app.logger.addHandler(handler)
-    app.logger.info("\n\n[INIT] SafeNetworking application initializing......\n")
+    app.logger.info("\n\n[INIT] SafeNetworking application initializing with log level of {0}\n".format(app.config["LOG_LEVEL"]))
 
 
     # Set up the ElasticSearch object for our instance of ES
@@ -59,18 +59,26 @@ def create_app():
         # Set up variables used for processing
         docIds = {}
         indexes = ("sfn-dns","sfn-iot")
+        qSize = app.config["INIT_QUERY_SIZE"]
 
         try:
             for index in indexes:
                 # Search for all docs that have processed set to 0, which means they 
                 # have not been processed yet.
-                docs = es.search(
-                    index=index,
-                    body={
-                        "query": {
-                            "match": {
-                                "processed": "0"}}})
-
+                docs = es.search(index=index,body={
+                                                    "size": qSize, 
+                                                    "query": {
+                                                        "match_all": {}
+                                                    },
+                                                    "sort": [
+                                                        {
+                                                        "msg_gen_time": {
+                                                            "order": "desc"
+                                                        }
+                                                        }
+                                                    ]
+                                                }
+                )
                 app.logger.info(
                             "Found {0} unpropcessed document(s) for {1}"
                                         .format(docs['hits']['total'],index))
@@ -80,12 +88,16 @@ def create_app():
                     print("{0}".format(docKey))
                     docIds[docKey] = index
                 
-                app.logger.info("Found {0}".format(json.dumps(docIds)))
+                
         except TransportError:
             app.logger.warning('Initialization was unable to find the index {0}'.format(index))
+        
+        return docIds
 
     # Initiate
-    startProcessing()
+    docIds = startProcessing()
+    pprint.pformat(json.dumps(docIds))
+    app.logger.debug("Found {0}".format(docIds))
 
     # When we kill Flask (SIGTERM), we want to clear the trigger for the
     # next thread
