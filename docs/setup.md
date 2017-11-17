@@ -10,15 +10,6 @@ sudo apt-get install apt-transport-https
 sudo apt-get install sysv-rc-conf
 ```
 
-#### Get the rlease key for the syslog-ng software
-```
-wget -qO - http://download.opensuse.org/repositories/home:/laszlo_budai:/syslog-ng/xUbuntu_16.04/Release.key | sudo apt-key add -
-```
-
-#### Create the syslog-ng repository listing for apt-get
-```
-echo "deb http://download.opensuse.org/repositories/home:/laszlo_budai:/syslog-ng/xUbuntu_16.04 ./" | sudo tee -a /etc/apt/sources.list.d/syslog-ng.list
-```
 
 #### Get the release key for the ElasticStack software
 ```
@@ -27,7 +18,7 @@ wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch |sudo apt-key add 
 
 #### Create the ElasticStack repository listing for apt-get
 ```
-echo "deb https://artifacts.elastic.co/packages/5.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-5.x.list
+echo "deb https://artifacts.elastic.co/packages/6.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-6.x.list
 ```
 </br>
 
