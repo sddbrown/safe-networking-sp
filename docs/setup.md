@@ -41,12 +41,11 @@ sudo apt-get update && sudo apt-get install default-jdk
 </br>
 </br>
 
-## Install Elasticsearch, Logstash, Kibana & syslog-ng
+## Install Elasticsearch, Logstash & Kibana
  ```
  sudo apt-get update && sudo apt-get install elasticsearch 
  sudo apt-get update && sudo apt-get install kibana 
  sudo apt-get update && sudo apt-get install logstash 
- sudo apt-get update && sudo apt-get install syslog-ng-core
  ```
 </br>
 </br>

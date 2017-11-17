@@ -7,3 +7,8 @@ wget -qO - http://download.opensuse.org/repositories/home:/laszlo_budai:/syslog-
 ```
 echo "deb http://download.opensuse.org/repositories/home:/laszlo_budai:/syslog-ng/xUbuntu_16.04 ./" | sudo tee -a /etc/apt/sources.list.d/syslog-ng.list
 ```
+
+#### Install the syslog-ng software
+```
+sudo apt-get update && sudo apt-get install syslog-ng-core
+```

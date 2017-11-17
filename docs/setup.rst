@@ -56,7 +56,7 @@ supported)
 *Rerun the java -version command to verify you now have Java 8
 installed*
 
-Install Elasticsearch, Logstash, Kibana & syslog-ng
+Install Elasticsearch, Logstash & Kibana 
 ---------------------------------------------------
 
 ::
@@ -64,7 +64,7 @@ Install Elasticsearch, Logstash, Kibana & syslog-ng
     sudo apt-get update && sudo apt-get install elasticsearch 
     sudo apt-get update && sudo apt-get install kibana 
     sudo apt-get update && sudo apt-get install logstash 
-    sudo apt-get update && sudo apt-get install syslog-ng-core
+    
 
 ELASTICSEARCH CONFIGURATION AND STARTUP
 =======================================
