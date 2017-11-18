@@ -9,12 +9,18 @@
     <!-- Default title -->
     {% block title %}
     <title>SafeNetworking - Palo Alto Networks</title>
-    {% endblock %}
+    {% endblock title %}
 
     <!-- Custom styles for this template -->
     <link href="{{ url_for('static', filename='css/reset.css') }}" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/safe-networking.css') }}" rel="stylesheet">
+
+    {% block imports %} 
+    {% endblock imports %}
+
+    
+    
 
 </head>
 
@@ -31,45 +37,9 @@
         <br/>
     </div>
 
-    <!-- Run through all flash messages sent to be populated on the next page rendered -->
-    <div>
-        <!-- ERROR Messages -->
-        {% with errors = get_flashed_messages(category_filter=["error"]) %}
-            {% if errors %}
-                {% for message in errors %}                      
-                    <div class="alert alert-error data-dismiss=alert alert-dismissible"> 
-                    <a href='#' class="close" data-dismiss="alert" aria-label="close">x</a>
-                    <strong>ERROR: </strong>{{ message }}
-                    </div>     
-                {% endfor %}
-            {% endif %}
-        {% endwith %} 
-
-        <!-- WARNING Messages -->
-        {% with warnings = get_flashed_messages(category_filter=["warning"]) %}
-            {% if warnings %}
-                {% for message in warnings %}                      
-                    <div class="alert alert-warning data-dismiss=alert alert-dismissible"> 
-                        <a href='#' class="close">x</a>
-                        <strong>WARNING: </strong>{{ message }}
-                    </div>     
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-
-        <!-- INFO Messages -->
-        {% with infomsgs = get_flashed_messages(category_filter=["info"]) %}
-            {% if infomsgs %}
-                {% for message in infomsgs %}                      
-                    <div class="alert alert-info data-dismiss=alert alert-dismissible"> 
-                        <a href='#' class="close" data-dismiss="alert" aria-label="close">x</a>
-                        <strong>INFO: </strong>{{ message }}
-                    </div>     
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-    </div>
-
+    {% block flash_messages %} 
+    {% endblock flash_messages %}
+    
     <!-- Load the proper template here -->
     <div id="iframe-container">
         {% block content %}
