@@ -43,10 +43,15 @@
   background-color: #fbff00;
   border-color: #e2e20e;
 }
-.alert-info {
+.alert-success {
   color: #36f806;
   background-color: #02811c;
   border-color: #00ff37;
+}
+.alert-info {
+  color: #0a06f8;
+  background-color: #1cb5f1;
+  border-color: #03129c;
 }
 .alert {
   padding: 15px;
