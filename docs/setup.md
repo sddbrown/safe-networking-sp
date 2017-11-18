@@ -1,4 +1,4 @@
-### Use the following instructions to download, install, configure and deploy the ElasticStack to an Ubuntu 16.04 system.  
+### Use the following instructions to download, install, configure and deploy the ElasticStack 6.x to an Ubuntu 16.04 system.  
 
 
 # SYSTEM SETUP 
