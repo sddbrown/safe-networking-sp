@@ -7,8 +7,10 @@
  channels to alert external systems that they are, indeed, intact and 
  functioning
 '''
-
+import time
+import requests
 import unittest
+import threading
 #from flask_script import Manager
 from project import create_app
 from flask_elasticsearch import FlaskElasticsearch
@@ -16,10 +18,36 @@ from flask_elasticsearch import FlaskElasticsearch
 app = create_app()
 #mgr = Manager(app)
 
-db = FlaskElasticsearch(app)
+#db = FlaskElasticsearch(app)
 
+def startBackgroundProcesses():
+    ''' 
+    Loops until it can access the first page and then exits.  This is used by 
+    the @app.before_first_request to start up the background processes for this
+    application to have it's data gathered, maniplutated and stored properly. 
+    '''
+        
+    def startProcs():
+        not_started = True
+        print('Starting Background Processes')
+        app.logger.info("Starting Background Processes")
+        
+        while not_started:
+            r = requests.get('http://127.0.0.1:5000/')
+            if r.status_code == 200:
+                print('Server started, quiting loop')
+                not_started = False
+            else:
+                print('Server not yet started - {0}'.format(r.status_code))
+                time.sleep(2)
+
+       
+    print('Started runner')
+    thread = threading.Thread(target=startProcs)
+    thread.start()
 
 from project.api.views import *
 
 if __name__ == '__main__':
+    startBackgroundProcesses()
     app.run(host="0.0.0.0")
