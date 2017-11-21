@@ -56,7 +56,7 @@ def activate_job():
                 print(doc['_id'])
                 docList.append(doc['_id'])
                 es.update(index="sfn-dns",id=doc['_id'],
-                            body={"doc": {"processed": 17}})
+                            body={"dolc": {"processed": 17}})
         except TransportError:
             app.logger.warning('Initialization was unable to find the index {0}'
                                 .format(index))
