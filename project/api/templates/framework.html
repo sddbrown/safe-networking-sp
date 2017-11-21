@@ -1,15 +1,13 @@
 {% extends "base.html" %}
-
+{% include "bootstrap/base.html" %}
 {% block imports %}
-    <!-- Bootstrap core CSS -->
-    <link href="{{ url_for('static', filename='css/bootstrap.css') }}" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/pan.css') }}" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/prototype.css') }}" rel="stylesheet">
 {% endblock imports %}
 
 {% block flash_messages %}
     <!-- Run through all flash messages sent to be populated on the next page rendered -->
-    <div>
+    <div class="container">
         {% with messages = get_flashed_messages(with_categories=true) %}
         <!-- Categories: success (green), info (blue), warning (yellow), danger (red) -->
         {% if messages %}
@@ -21,41 +19,6 @@
           {% endfor %}
         {% endif %}
       {% endwith %}
-        <!-- ERROR Messages 
-        {% with errors = get_flashed_messages(category_filter=["error"]) %}
-            {% if errors %}
-                {% for message in errors %}                      
-                    <div class="alert alert-error data-dismiss=alert alert-dismissible"> 
-                    <a href='#' class="close" data-dismiss="alert" aria-label="close">x</a>
-                    <strong>ERROR: </strong>{{ message }}
-                    </div>     
-                {% endfor %}
-            {% endif %}
-        {% endwith %} 
-
-        <!-- WARNING Messages 
-        {% with warnings = get_flashed_messages(category_filter=["warning"]) %}
-            {% if warnings %}
-                {% for message in warnings %}                      
-                    <div class="alert alert-warning data-dismiss=alert alert-dismissible"> 
-                        <a href='#' class="close">x</a>
-                        <strong>WARNING: </strong>{{ message }}
-                    </div>     
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-
-        <!-- INFO Messages 
-        {% with infomsgs = get_flashed_messages(category_filter=["info"]) %}
-            {% if infomsgs %}
-                {% for message in infomsgs %}                      
-                    <div class="alert alert-info data-dismiss=alert alert-dismissible"> 
-                        <a href='#' class="close" data-dismiss="alert" aria-label="close">x</a>
-                        <strong>INFO: </strong>{{ message }}
-                    </div>     
-                {% endfor %}
-            {% endif %}
-        {% endwith %}-->
     </div>
 {% endblock flash_messages %}
 

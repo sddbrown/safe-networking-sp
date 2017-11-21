@@ -8,6 +8,7 @@ import atexit
 import logging
 import pprint
 from flask import Flask, jsonify
+from flask_bootstrap import Bootstrap
 from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import TransportError
 from logging.handlers import RotatingFileHandler
@@ -27,7 +28,7 @@ def create_app():
 
     # Instantiate the app
     app = Flask(__name__)
-    
+    Bootstrap(app)
     # Set config parameters
     app.config.from_pyfile('config')
     app.config.from_pyfile('instance/sfn.cfg')

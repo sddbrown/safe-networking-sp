@@ -16,9 +16,6 @@ def login():
 @sfn_blueprint.route('/dashboard')
 def dashboard():
     # Create the URL for Kibana using the config options set at runtime
-    flash('Here is a test', 'error')
-    flash('Here is a test', 'warning')
-    flash('Here is a test', 'info')
     KIBANA_URL = "{0}:{1}".format(current_app.config["KIBANA_HOST"],
                                   current_app.config["KIBANA_PORT"])
     return render_template('dashboard.html',kibana_host=KIBANA_URL)
