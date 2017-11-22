@@ -1,48 +1,48 @@
+from elasticsearch import TransportError
 
 
+def processDNS(es,app):
 
+    qSize = app.config["DNS_INIT_QUERY_SIZE"]
 
-docIds = {}
-    #     indexes = ("sfn-dns","sfn-iot")
-    #     qSize = app.config["INIT_QUERY_SIZE"]
+    try:
+        docs = es.search(index="sfn-dns",
+                         body={"size": qSize, 
+                               "query": { 
+                                  "bool": { 
+                                    "must": [
+                                      {"match": {"threat_category": "wildfire"}}, 
+                                      {"match": {"processed": "0"}}
+                                    ]
+                                  }
+                                }
+                              }
+                        )
 
-    #     try:
-    #         for index in indexes:
-    #             # Search for all docs that have processed set to 0, which means they 
-    #             # have not been processed yet.
-    #             docs = es.search(index=index,body={
-    #                                                 "size": qSize, 
-    #                                                 "query": {
-    #                                                     "match_all": {}
-    #                                                 },
-    #                                                 "sort": [
-    #                                                     {
-    #                                                     "msg_gen_time": {
-    #                                                         "order": "desc"
-    #                                                     }
-    #                                                     }
-    #                                                 ]
-    #                                             }
-    #             )
-    #             app.logger.info(
-    #                         "Found {0} unpropcessed document(s) for {1}"
-    #                                     .format(docs['hits']['total'],index))
+        app.logger.info("Found {0} unpropcessed document(s) for {1}"
+                                .format(docs['hits']['total'],"sfn-dns"))
 
-    #             for doc in docs['hits']['hits']:
-    #                 docKey = doc['_id']
-    #                 print("{0}".format(docKey))
-    #                 docIds[docKey] = index
-                
-                
-    #     except TransportError:
-    #         app.logger.warning('Initialization was unable to find the index {0}'.format(index))
-        
-    #     return docIds
+        #docList = {doc['_id']:doc['threat_id'] for doc in docs['hits']['hits']}
+        docIds = dict()
+        for entry in docs['hits']['hits']:
+            docKey = entry['_id']
+            print(docKey)
+            docIds[docKey] = entry['_source']['threat_id']
+            print("{0} : {1}".format(docKey,docIds[docKey]))
+            
+    except TransportError:
+        app.logger.warning('Initialization was unable to find the index sfn-dns')
+    
+#     return docIds
 
-    # # Initiate
-    # docIds = startProcessing()
-    # pprint.pformat(json.dumps(docIds))
-    # app.logger.debug("Found {0}".format(docIds))
+# # Initiate
+# docIds = startProcessing()
+# pprint.pformat(json.dumps(docIds))
+# app.logger.debug("Found {0}".format(docIds))
+
+def main():
+    pass
 
 if __name__ == "main":
+    main()
     

@@ -13,6 +13,7 @@ import unittest
 import threading
 #from flask_script import Manager
 from project import create_app
+from project.api import utils
 from elasticsearch import Elasticsearch, TransportError
 
 # Create the Flask application 
@@ -34,38 +35,41 @@ def activate_job():
         and then sends a call to the dns handler to process them with AF, do 
         lookups, etc.
         '''
-        docList = list()
-        try:
-            docs = es.search(index="sfn-dns",
-                             body={
-                             "query": { 
-                               "bool": { 
-                                 "must": [
-                                   {"match": { "threat_category": "wildfire" }}, 
-                                   {"match": { "processed": "0" }}
-                                 ]}},
-                             "sort": [{"msg_gen_time": {"order": "desc"}}]
-                             })
+        while True:
+            utils.processDNS(es,app)
+            time.sleep(app.config["POOL_TIME"])
+        # docList = list()
+        # try:
+        #     docs = es.search(index="sfn-dns",
+        #                      body={
+        #                      "query": { 
+        #                        "bool": { 
+        #                          "must": [
+        #                            {"match": { "threat_category": "wildfire" }}, 
+        #                            {"match": { "processed": "0" }}
+        #                          ]}},
+        #                      "sort": [{"msg_gen_time": {"order": "desc"}}]
+        #                      })
             
-            app.logger.info("Found {0} unpropcessed document(s) for sfn-dns"
-                                .format(docs['hits']['total']))
+        #     app.logger.info("Found {0} unpropcessed document(s) for sfn-dns"
+        #                         .format(docs['hits']['total']))
 
-            # Get the document ID for each unprocessed doc and add it to the list. 
-            # Then set the processed term to 17 (picked up)
-            for doc in range(5): # docs['hits']['hits']:
-                print(doc['_id'])
-                docList.append(doc['_id'])
-                es.update(index="sfn-dns",id=doc['_id'],
-                            body={"dolc": {"processed": 17}})
-        except TransportError:
-            app.logger.warning('Initialization was unable to find the index {0}'
-                                .format(index))
+        #     # Get the document ID for each unprocessed doc and add it to the list. 
+        #     # Then set the processed term to 17 (picked up)
+        #     for doc in range(5): # docs['hits']['hits']:
+        #         print(doc['_id'])
+        #         docList.append(doc['_id'])
+        #         es.update(index="sfn-dns",id=doc['_id'],
+        #                     body={"doc": {"processed": 17}})
+        # except TransportError:
+        #     app.logger.warning('Initialization was unable to find the index {0}'
+        #                         .format(index))
                 
             
-        # Initiate
-        #docIds = startProcessing()
-        pprint.pformat(json.dumps(docIds))
-        app.logger.debug("Found {0}".format(docIds))
+        # # Initiate
+        # #docIds = startProcessing()
+        # pprint.pformat(json.dumps(docIds))
+        # app.logger.debug("Found {0}".format(docIds))
 
 
     def runIoT():
@@ -99,12 +103,11 @@ def initBackgroundProcs():
                 not_started = False
             else:
                 print('Server not yet started - {0}'.format(r.status_code))
-                time.sleep(2)
-
-       
+                time.sleep(2)     
     
     thread = threading.Thread(target=initProcs)
     thread.start()
+
 
 from project.api.views import *
 
