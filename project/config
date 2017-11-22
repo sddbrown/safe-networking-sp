@@ -11,7 +11,7 @@ import os
 
 
 ################################################################################
-# APPLICATION SPECIFIC
+#                           APPLICATION SPECIFIC
 ################################################################################
 # Current version number of SafeNetworking
 VERSION = "0.1-dev"
@@ -25,7 +25,15 @@ SECRET_KEY = "\xfd{H\xe5<\x95\xf9\xe3\x96.5\xd1\x01O<!\xd5\xa2\xa0\x9fR\xa1\xa8"
 # Sets the base directory for the application
 BASE_DIR = os.path.abspath(os.path.dirname(__file__)) 
 # Set the number of seconds for multi-threading to wait between processing calls 
-POOL_TIME = 5   
+POOL_TIME = 60   
+# When SafeNetworking is started, number of documents to read from the DB.  The
+# larger the number, the longer this will take to catch up.  
+DNS_INIT_QUERY_SIZE = 1000
+IOT_INIT_QUERY_SIZE = 1000
+
+################################################################################
+#                                LOGGING
+################################################################################
 # Log level for the SafeNetworking application itself.  All files are written
 # to log/sfn.log
 LOG_LEVEL = "WARNING"
@@ -33,12 +41,11 @@ LOG_LEVEL = "WARNING"
 LOG_SIZE = "10000000"
 # Number of log files to keep in log rotation
 LOG_BACKUPS = "10"
-# When SafeNetworking is started, number of documents to read from the DB.  The
-# larger the number, the longer this will take to catch up.  
-INIT_QUERY_SIZE = 1000
+
+
 
 ################################################################################
-# ELASTICSTACK
+#                            ELASTICSTACK
 ################################################################################
 # By default our ElasticStack is installed all on the same system
 ELASTICSEARCH_HOST = "localhost"
