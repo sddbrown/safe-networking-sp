@@ -15,8 +15,7 @@ import os
 ################################################################################
 # Current version number of SafeNetworking
 VERSION = "0.1-dev"
-# The debug setting for Flask.  Shows messages on *console* where the 
-# application is started from
+# The debug setting for Flask.  Shows messages on *console* 
 DEBUG = False
 # Flask setting for where session manager contains the info on the session(s)
 SESSION_TYPE = "filesystem"

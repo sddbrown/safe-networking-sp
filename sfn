@@ -11,19 +11,20 @@ import time
 import requests
 import unittest
 import threading
-#from flask_script import Manager
 from project import create_app
 from project.api import utils
-from elasticsearch import Elasticsearch, TransportError
+from elasticsearch import Elasticsearch
 
 # Create the Flask application 
 app = create_app()
 
-# Set up the ElasticSearch object for our instance of ES
+# Set up the ElasticSearch object for our instance of ES and log it if in DEBUG
 es = Elasticsearch([{'host': app.config["ELASTICSEARCH_HOST"],
                      'port': app.config["ELASTICSEARCH_PORT"]}])
+app.logger.debug("ElasticSearch host is: {0}"
+                    .format(app.config["ELASTICSEARCH_HOST"]))
 
-app.logger.debug("ElasticSearch host is: {0}".format(app.config["ELASTICSEARCH_HOST"]))
+
 # This decorator gets kicked off the first time a request is made to the 
 # application.  We are forcing it with the initProcs() call so we start 
 # processing in the background as soon as the application is started. 
@@ -38,48 +39,16 @@ def activate_job():
         while True:
             utils.processDNS(es,app)
             time.sleep(app.config["POOL_TIME"])
-        # docList = list()
-        # try:
-        #     docs = es.search(index="sfn-dns",
-        #                      body={
-        #                      "query": { 
-        #                        "bool": { 
-        #                          "must": [
-        #                            {"match": { "threat_category": "wildfire" }}, 
-        #                            {"match": { "processed": "0" }}
-        #                          ]}},
-        #                      "sort": [{"msg_gen_time": {"order": "desc"}}]
-        #                      })
-            
-        #     app.logger.info("Found {0} unpropcessed document(s) for sfn-dns"
-        #                         .format(docs['hits']['total']))
-
-        #     # Get the document ID for each unprocessed doc and add it to the list. 
-        #     # Then set the processed term to 17 (picked up)
-        #     for doc in range(5): # docs['hits']['hits']:
-        #         print(doc['_id'])
-        #         docList.append(doc['_id'])
-        #         es.update(index="sfn-dns",id=doc['_id'],
-        #                     body={"doc": {"processed": 17}})
-        # except TransportError:
-        #     app.logger.warning('Initialization was unable to find the index {0}'
-        #                         .format(index))
-                
-            
-        # # Initiate
-        # #docIds = startProcessing()
-        # pprint.pformat(json.dumps(docIds))
-        # app.logger.debug("Found {0}".format(docIds))
-
-
+        
     def runIoT():
             while True:
                 print("Run IoT recurring task")
                 time.sleep(3)
 
+    # Start the DNS processing routines
     threadDNS = threading.Thread(target=runDNS)
     threadDNS.start()
-
+    # Start the IoT processing routines 
     threadIoT = threading.Thread(target=runIoT)
     threadIoT.start()
 
@@ -97,14 +66,15 @@ def initBackgroundProcs():
         app.logger.info("Initializing Background Processes")
         
         while not_started:
-            r = requests.get('http://127.0.0.1:5000/')
-            if r.status_code == 200:
-                print('SafeNetworking server started')
-                not_started = False
-            else:
-                print('Server not yet started - {0}'.format(r.status_code))
-                time.sleep(2)     
-    
+            try:
+                r = requests.get('http://127.0.0.1:5000/')
+                if r.status_code == 200:
+                    print('SafeNetworking server started')
+                    not_started = False
+            except:
+                    print('Server not yet started')
+                    time.sleep(2)     
+        
     thread = threading.Thread(target=initProcs)
     thread.start()
 

@@ -1,4 +1,5 @@
-from elasticsearch import TransportError
+from elasticsearch import TransportError, RequestError, ElasticsearchException
+from utility.utils import searchDomains
 
 
 def processDNS(es,app):
@@ -7,20 +8,22 @@ def processDNS(es,app):
     entries in ElasticSearch.  
     '''
     qSize = app.config["DNS_INIT_QUERY_SIZE"]
+    apiKey = app.config["AUTOFOCUS_API_KEY"]
 
     try:
         # Query for the unprocessed DNS entries.  
-        docs = es.search(index="sfn-dns",
-                         body={"size": qSize, 
-                               "query": { 
-                                  "bool": { 
-                                    "must": [
-                                      {"match": {"threat_category": "wildfire"}}, 
-                                      {"match": {"processed": "0"}}
-                                    ]
-                                  }
-                                }
-                              }
+        docs = es.search(index="sfn-dns-event",
+                         body={
+                            "size": qSize, 
+                            "sort": [{"msg_gen_time": {"order": "desc"}}], 
+                            "query": { 
+                                "bool": { 
+                                "must": [
+                                    {"match": {"threat_category": "wildfire"}}, 
+                                    {"match": {"processed": "0"}}] # end must
+                                }  # end bool
+                            }
+                          }   # end body
                         )
 
         app.logger.info("Found {0} unpropcessed document(s) for {1}"
@@ -32,11 +35,12 @@ def processDNS(es,app):
         
         # Need to manipulate the threat_id to break out the domain - would be
         # better to do this with the logger - need to figure that out.
-        docIds = dict()
-        for entry in docs['hits']['hits']:
-            docKey = entry['_id']
-            docIds[docKey] = entry['_source']['threat_id']
-            print("{0} : {1}".format(docKey,docIds[docKey]))
+        # docIds = dict()
+        # for entry in docs['hits']['hits']:
+        #     docKey = entry['_id']
+        #     docIds[docKey] = entry['_source']['domain_name']
+        #     #print("{0} : {1}".format(docKey,docIds[docKey]))
+        searchDomains('xiterzao.ddns.net',apiKey)
             
     except TransportError:
         app.logger.warning('Initialization was unable to find the index sfn-dns')
@@ -46,6 +50,6 @@ def processDNS(es,app):
 def main():
     pass
 
-if __name__ == "main":
+if __name__ == "__main__":
     main()
     
