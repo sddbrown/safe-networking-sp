@@ -45,9 +45,7 @@ def create_app():
     app.logger.info("\n\n[INIT] SafeNetworking application initializing with log level of {0}\n".format(app.config["LOG_LEVEL"]))
 
 
-    # Set up the ElasticSearch object for our instance of ES
-    es = Elasticsearch([{'host': app.config["ELASTICSEARCH_HOST"],
-                         'port': app.config["ELASTICSEARCH_PORT"]}])
+    
 
     
     # def startProcessing():
