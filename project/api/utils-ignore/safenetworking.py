@@ -1,5 +1,5 @@
 from elasticsearch import TransportError, RequestError, ElasticsearchException
-#from utility.utils import searchDomains
+from utils.safenetworking import searchDomains
 
 
 def processDNS(es,app):
@@ -35,12 +35,12 @@ def processDNS(es,app):
         
         # Need to manipulate the threat_id to break out the domain - would be
         # better to do this with the logger - need to figure that out.
-        docIds = dict()
-        for entry in docs['hits']['hits']:
-            docKey = entry['_id']
-            docIds[docKey] = entry['_source']['domain_name']
-            print("{0} : {1}".format(docKey,docIds[docKey]))
-        #searchDomains('xiterzao.ddns.net',apiKey)
+        # docIds = dict()
+        # for entry in docs['hits']['hits']:
+        #     docKey = entry['_id']
+        #     docIds[docKey] = entry['_source']['domain_name']
+        #     #print("{0} : {1}".format(docKey,docIds[docKey]))
+        searchDomains('xiterzao.ddns.net',apiKey)
             
     except TransportError:
         app.logger.warning('Initialization was unable to find the index sfn-dns')
