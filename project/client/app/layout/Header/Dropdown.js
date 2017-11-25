@@ -1,5 +1,6 @@
 import React from "react";
 import styled from "styled-components";
+import Logo from "public/images/logo-pan-bg.png";
 
 export default class Dropdown extends React.Component {
   constructor() {
@@ -24,12 +25,71 @@ export default class Dropdown extends React.Component {
           isActive={isActive}
           className={isActive ? "active" : null}
         >
-          {isActive ? "OPEN" : "Closed"}
+          <section>
+            <h3> Palo Alto Network Applications</h3>
+            <Menu>
+              <li>
+                <a href="http://www.google.com" target="_blank">
+                  Google
+                </a>
+              </li>
+              <li>
+                <a href="http://www.google.com" target="_blank">
+                  Another Link
+                </a>
+              </li>
+            </Menu>
+          </section>
+          <section>
+            <h3>Extensions</h3>
+            <Menu>
+              <li>
+                <IconLink href="http://www.google.com" target="_blank">
+                  <img src={Logo} />
+                  <span>MineMeld</span>
+                </IconLink>
+              </li>
+            </Menu>
+          </section>
         </DropdownDrawer>
       </Root>
     );
   }
 }
+
+const IconLink = styled.a`
+  display: flex !important;
+  justify-content: flex-start;
+  align-items: center;
+
+  img {
+    width: 30px;
+    height: 30px;
+  }
+
+  span {
+    display: inline-block;
+    margin-left: 10px;
+  }
+`;
+
+const Menu = styled.ul`
+  li {
+    list-style: none;
+
+    a {
+      display: block;
+      padding: 7px;
+      font-size: 13px;
+      color: #666;
+      text-decoration: none;
+
+      &:hover {
+        background: #ddd;
+      }
+    }
+  }
+`;
 
 const BrandArea = styled.div`
   width: 100%;
@@ -39,18 +99,18 @@ const BrandArea = styled.div`
   &:before {
     content: " ";
     display: block;
-    background: url("/static/images/logo-pan-bg.png") no-repeat 20px center;
-    background-size: 55px;
+    background: url(${Logo}) no-repeat 20px center;
+    background-size: 66px;
     width: 100%;
     height: 100%;
     position: absolute;
     top: 0;
     left: 0;
-    opacity: 0.2;
+    opacity: 0.25;
   }
 
   p {
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 600;
     text-transform: uppercase;
     color: #fff;
@@ -60,19 +120,21 @@ const BrandArea = styled.div`
 `;
 
 const BrandAreaArrow = styled.div`
-  width: 20px;
-  height: 20px;
-  left: 215px;
+  width: 12px;
+  height: 12px;
+  left: 205px;
   top: 50%;
   transform: translateY(-50%);
   position: absolute;
   transition: all ease 0.2s;
+  opacity: 0.666;
 
   &.active {
     transform: translateY(-50%) rotate(180deg);
   }
 
   i {
+    font-size: 12px;
     color: #fff;
     width: 100%;
     height: 100%;
@@ -83,13 +145,32 @@ const BrandAreaArrow = styled.div`
 `;
 
 const DropdownDrawer = styled.div`
+  padding: 12px;
+
+  section {
+    padding: 10px 0;
+    border-bottom: solid 1px #ccc;
+
+    &:last-child {
+      border: 0;
+    }
+  }
+
+  h3 {
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    padding: 0 7px;
+    color: rgb(41, 43, 44);
+  }
+
   width: 300px;
-  height: 300px;
+  height: auto;
   background: #fff;
   box-shadow: 0px 0px 3px rgba(0, 0, 0, 0.3);
   position: absolute;
   top: 100%;
-  left: 40px;
+  left: 0px;
   transition: all ease 0.3s;
   transform: translateY(-100%);
   z-index: -1;
@@ -104,9 +185,9 @@ const Root = styled.div`
   width: 340px;
   display: inline-block;
   position: relative;
-  background-color: #444;
-
-  &:hover {
+  background-color: #000;
+  transition: all ease 0.2s;
+  s &:hover {
     background-color: #222;
   }
 `;

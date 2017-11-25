@@ -1,37 +1,18 @@
 import React from "react";
+import { Link } from "react-router5";
 import styled from "styled-components";
 
 const Nav = () => (
   <Root>
     <ul>
       <li>
-        <a
-          href="/dashboard"
-          className={
-            (window.location.pathname === "/dashboard" ||
-              window.location.pathname === "") &&
-            "active"
-          }
-        >
-          {" "}
-          Dashboard
-        </a>
+        <Link routeName="dashboard">Dashboard</Link>
       </li>
       <li>
-        <a
-          href="/iot"
-          className={window.location.pathname === "/iot" && "active"}
-        >
-          IOT
-        </a>
+        <Link routeName="iot">iot</Link>
       </li>
       <li>
-        <a
-          href="/domains"
-          className={window.location.pathname === "/domains" && "active"}
-        >
-          Domain
-        </a>
+        <Link routeName="domain">Domain</Link>
       </li>
     </ul>
   </Root>
@@ -55,7 +36,7 @@ const Root = styled.nav`
         display: block;
         color: #fff;
         opacity: 0.666;
-        line-height: 60px;
+        line-height: 55px;
         text-transform: uppercase;
         font-size: 13px;
         border-bottom: solid 5px transparent;

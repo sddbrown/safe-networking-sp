@@ -2,11 +2,11 @@ import React from "react";
 import styled from "styled-components";
 
 const UtilityBar = () => (
-  <div id="utility-bar">
+  <Root>
     <UtilityButton title="Search" icon="search" />
     <UtilityButton title="Settings" icon="cog" />
     <UtilityButton title="FAQ" icon="question-circle" />
-  </div>
+  </Root>
 );
 
 const UtilityButton = props => (

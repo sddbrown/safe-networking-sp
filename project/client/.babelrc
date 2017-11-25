@@ -1,10 +1,12 @@
 {
-  "plugins": ["transform-react-jsx"],
   "presets": [
+    "react",
+    "stage-0",
     [
       "env",
       {
         "targets": {
+          "modules": false,
           "browsers": ["last 2 versions", "safari >= 7"]
         }
       }

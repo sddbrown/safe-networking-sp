@@ -138,3 +138,7 @@ body {
   height: 100%;
   font-family: "lato", "helvetica", sans-serif;
 }
+
+#react-app-mount {
+  height: 100%;
+}
