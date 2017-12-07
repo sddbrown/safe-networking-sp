@@ -1,0 +1,144 @@
+"sfn-dns-events" : {
+    "mappings" : {
+        "doc" : {
+            "properties": {
+                "@timestamp": {
+                  "type": "date"
+                },
+                "@version": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  }
+                },
+                "device_name": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword",
+                      "ignore_above": 128
+                    }
+                  }
+                },
+                "domain_name": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  }
+                },
+                "dst_ip": {
+                  "type": "ip",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  }
+                },
+                "host": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  }
+                },
+                "msg_gen_time": {
+                  "type": "date",
+                  "format": "yyyy/MM/dd HH:mm:ss||yyyy/MM/dd||epoch_millis"
+                },
+                "number": {
+                  "type": "integer",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  }
+                },
+                "processed": {
+                  "type": "byte",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  }
+                },
+                "received_at": {
+                  "type": "date"
+                },
+                "rule": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  }
+                },
+                "src_ip": {
+                  "type": "ip",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  },
+                  "geoip"  : {
+                    "dynamic": true,
+                    "properties" : {
+                      "ip": { "type": "ip" },
+                      "location" : { "type" : "geo_point" },
+                      "latitude" : { "type" : "half_float" },
+                      "longitude" : { "type" : "half_float" }
+                    }
+                  }
+                },
+                "tags": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  }
+                },
+                "threat_category": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  }
+                },
+                "threat_id": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  }
+                },
+                "threat_name": {
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "type": "keyword",
+                      "ignore_above": 256
+                    }
+                  }
+                }
+            }
+        }
+    }
+}
