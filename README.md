@@ -17,7 +17,7 @@ $ source env/bin/activate
 $ pip install -r requirements.txt
 
 ###### 6. Edit instance/sfn.cfg for your installation
-[Configuring SafeNetworking](docs/sfn-config.rst)
+[Configuring SafeNetworking](docs/sfn-config.rst) - this link is currently under construction. 
 
 ###### 7. Start the portal
 $ python ./sfn
