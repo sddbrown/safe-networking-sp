@@ -54,7 +54,7 @@
                   "type": "date",
                   "format": "yyyy/MM/dd HH:mm:ss||yyyy/MM/dd||epoch_millis"
                 },
-                "number": {
+                "sig_num": {
                   "type": "integer",
                   "fields": {
                     "keyword": {
