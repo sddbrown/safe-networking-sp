@@ -91,15 +91,15 @@
                       "type": "keyword",
                       "ignore_above": 256
                     }
-                  },
-                  "geoip"  : {
-                    "dynamic": true,
-                    "properties" : {
-                      "ip": { "type": "ip" },
-                      "location" : { "type" : "geo_point" },
-                      "latitude" : { "type" : "half_float" },
-                      "longitude" : { "type" : "half_float" }
-                    }
+                  }
+                },
+                "geoip"  : {
+                  "dynamic": true,
+                  "properties" : {
+                    "ip": { "type": "ip" },
+                    "location" : { "type" : "geo_point" },
+                    "latitude" : { "type" : "half_float" },
+                    "longitude" : { "type" : "half_float" }
                   }
                 },
                 "tags": {
