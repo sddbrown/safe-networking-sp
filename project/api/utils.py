@@ -1,6 +1,39 @@
+import os
+from multiprocessing.dummy import Pool as ThreadPool
+from multiprocessing import cpu_count
 from elasticsearch import TransportError, RequestError, ElasticsearchException
+
 #from utility.utils import searchDomains
 
+def searchDomain():
+    # First thing is to set the processed flag to 17 on the sfn-dns-event doc
+    # meaning we at least try it (try except block with logging)
+    
+    indexLocal = 3
+    processID = os.getpid()
+
+
+
+    apiKey = app.config["AUTOFOCUS_API_KEY"]
+    
+    # Second check to see if we already have the domain in sfn-dns-domains index
+    #  If we do, set variable index-local var to 1.
+    #   Next check the age of the index and see if it needs updating and set index-local
+    #   variable to 3 so it will update it.
+    #  Else we do not have it locally and will need to call AF for it.
+    #   create the index for the domain name 
+    #   set variable index-local to 3 so it can go to AF and update
+    #  If variable index-local is set to 3 go to AF and update the index for 
+    #    that domain and set variable index-local to 1
+    # 
+    # If index-local is 1 (it better be) then reference the sfn-dns-domains doc ID
+    #   in the sfn-dns-event doc so that we can later look up the pertinatent data
+    #   and tags for that domain against that event.  
+    #  
+    #  PRAY
+    #
+    #  
+    # 
 
 def processDNS(es,app):
     '''
@@ -18,30 +51,34 @@ def processDNS(es,app):
                             "sort": [{"msg_gen_time": {"order": "desc"}}], 
                             "query": { 
                                 "bool": { 
-                                "must": [
-                                    {"match": {"threat_category": "wildfire"}}, 
-                                    {"match": {"processed": "0"}}] # end must
-                                }  # end bool
-                            }
-                          }   # end body
+                                    "must": [
+                                        {"match": {"threat_category": "wildfire"}}, 
+                                        {"match": {"processed": "0"}}] # end must
+                                 }  # end bool
+                              }
+                           }   # end body
                         )
 
         app.logger.info("Found {0} unpropcessed document(s) for {1}"
-                                .format(docs['hits']['total'],"sfn-dns"))
+                                .format(docs['hits']['total'],"sfn-dns-event"))
 
-        # Create a dictionary of the docs and the associate threat_id
-       # docIds = {doc['_id']:doc['_source']['threat_id'] for doc in }
-        #print(dict(docIds))
-        
-        # Need to manipulate the threat_id to break out the domain - would be
-        # better to do this with the logger - need to figure that out.
-        docIds = dict()
+
+        priDocIds = list()
+        secDocIds = list()
+        count = 0
         for entry in docs['hits']['hits']:
-            docKey = entry['_id']
-            docIds[docKey] = entry['_source']['domain_name']
-            print("{0} : {1}".format(docKey,docIds[docKey]))
+            if entry['_source']['threat_name'] == "generic":
+                secDocIds.append(entry['_id'])
+            else:
+                priDocIds.append(entry['_id'])
+                print(f"{priDocIds} - {entry['_source']['threat_name']}")
+                count += 1
         #searchDomains('xiterzao.ddns.net',apiKey)
-            
+        print(count) 
+        
+        pool = ThreadPool(cpu_count() * 4)
+        results = pool.map(searchDomain, devices)
+        
     except TransportError:
         app.logger.warning('Initialization was unable to find the index sfn-dns')
     
