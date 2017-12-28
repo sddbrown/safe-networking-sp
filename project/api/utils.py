@@ -1,88 +1,367 @@
-import os
-from multiprocessing.dummy import Pool as ThreadPool
-from multiprocessing import cpu_count
-from elasticsearch import TransportError, RequestError, ElasticsearchException
+#import os
+import sys
+import json
+import time
+import datetime
+import pan.afapi
+#from __future__ import print_function
 
-#from utility.utils import searchDomains
 
-def searchDomain():
-    # First thing is to set the processed flag to 17 on the sfn-dns-event doc
-    # meaning we at least try it (try except block with logging)
+def calcCacheTimeout(cacheTimeout,lastDate,app):
+    now = datetime.datetime.now()
+    lastUpdatedDate = datetime.datetime.strptime(lastDate, '%Y/%m/%d %H:%M:%S')
+    calcDate = abs((now - lastUpdatedDate).days) 
+
+    if calcDate < cacheTimeout:
+        app.logger.debug(f"The calculated time is {calcDate} days vs setting of {cacheTimeout} days and should be good")
+        return True
+    else:
+        app.logger.debug(f"The calculated time is {calcDate} days vs setting of {cacheTimeout} and needs to be updated")
+        return False
+
+
+def updateDetailsDoc(domainDoc,threatDomain,app):
+    try:
+        apiKey = app.config['AUTOFOCUS_API_KEY']
+        hostname = app.config['AUTOFOCUS_HOSTNAME']
+
+        print('calling getTags to obtain domain tags')
+        afOutput = getTags(hostname, apiKey, 'get_tags', threatDomain, False, app)
+        print(f'{afOutput}')
+        return 1
+        # Conver
+
+        domain_dict = json.loads(af_output)
+
+        for item in domain_dict['hits']:
+            record = item['_source']
+            for item in record:
+
+# parsing the response to find the tag information
+# then when required, creating a new tag dictionary entry for newly found tags
+
+                if 'tag' in record:
+                    af_tags = record['tag']
+                    for item in af_tags:
+                        if item in tag_dict:
+                            pass
+                        else:
+
+    # for new tags do a secondary query to get the tag type aka the 'tag class' in Autofocus
+    # this captures all tag responses in the local tag dictionary
+
+                            tag_types = getTags(hostname, api_key, 'tag_info', False, item,app)
+                            tags_dict = json.loads(tag_types)
+                            tag_dict[item] = {}
+                            tag_dict[item]['class'] = tags_dict['tag']['tag_class']
+
+
+                            if not tags_dict['tag_groups']:
+                                pass
+                            else:                      
+                                tag_dict[item]['group'] = tags_dict['tag_groups'][0]['tag_group_name']
+
+                                # Append tag file with new tag data
+                            with open('tag_data.txt','w') as tagFile:
+                                tagFile.write(json.dumps(tag_dict, indent=4, sort_keys=True))
+
+    # the application is looking for tags related to a named malware family
+    # If a match then the domain list dictionary is updated with the malware family
+                        
+                        if tag_dict[item]['class'] == 'malware_family':
+                          if item in domains_and_tags[dns_domain]['malware']:
+                              pass
+                          else:
+                            domains_and_tags[dns_domain]['malware'].append(item)
+
+        print('\n' + json.dumps(domains_and_tags[dns_domain], indent=4))
+
+
+
+        return True
+    except KeyError as error:
+        print(f"Unable to retrieve AutoFocus API key, verify it is set in instance/.panrc")
+        app.logger.error(f"Unable to retrieve AutoFocus API key. Returned {error} when getting domain info for {threatDomain}")
+        raise 
     
-    indexLocal = 3
-    processID = os.getpid()
 
 
+def getTags(hostname, api_key, action, domain, af_tag, app):
 
-    apiKey = app.config["AUTOFOCUS_API_KEY"]
-    
-    # Second check to see if we already have the domain in sfn-dns-domains index
-    #  If we do, set variable index-local var to 1.
-    #   Next check the age of the index and see if it needs updating and set index-local
-    #   variable to 3 so it will update it.
-    #  Else we do not have it locally and will need to call AF for it.
-    #   create the index for the domain name 
-    #   set variable index-local to 3 so it can go to AF and update
-    #  If variable index-local is set to 3 go to AF and update the index for 
-    #    that domain and set variable index-local to 1
-    # 
-    # If index-local is 1 (it better be) then reference the sfn-dns-domains doc ID
-    #   in the sfn-dns-event doc so that we can later look up the pertinatent data
-    #   and tags for that domain against that event.  
-    #  
-    #  PRAY
-    #
-    #  
-    # 
 
-def processDNS(es,app):
-    '''
-    This funciton is used to add AutoFocus information to the unprocessed 
-    entries in ElasticSearch.  
-    '''
-    qSize = app.config["DNS_INIT_QUERY_SIZE"]
-    apiKey = app.config["AUTOFOCUS_API_KEY"]
+    options = {
+        'sessions': False,
+        'aggregate': False,
+        'histogram': False,
+        'session': None,
+        'samples': False,
+        'sample_analysis': False,
+        'top_tags': False,
+        'tags': False,
+        'tag': None,
+        'export': False,
+        'json_requests': [],
+        'json_request': None,
+        'json_request_obj': None,
+        'num_results': None,
+        'scope': None,
+        'hash': None,
+        'terminal': False,
+        'api_key': api_key,
+        'api_version': None,
+        'hostname': hostname,
+        'ssl': False,
+        'print_python': False,
+        'print_json': True,
+        'debug': 0,
+        'panrc_tag': None,
+        'timeout': None,
+        }
+
+    print(f"In getTags with option of {af_tag} and apiKey of {api_key}")
+    if action == 'get_tags':
+
+        options['samples'] = True
+        lastYear = int(time.strftime("%Y")) - 1
+        query_arg = '{{"query":{{"operator":"all","children":[{{"field":"alias.domain","operator":"contains","value":"{0}"}},{{"field":"sample.tag_class","operator":"is in the list","value":["malware_family"]}}]}},"scope":"global","size":10,"from":0,"sort":{{"create_date":{{"order":"desc"}}}}}}'.format(domain)
+
+        options['json_requests'].append(process_arg(query_arg,app))
+
+        if options['json_requests']:
+            obj = {}
+            
+            for r in options['json_requests']:
+                try:
+                    x = json.loads(r)
+                except ValueError as e:
+                    print('%s: %s' % (e, r), file=sys.stderr)
+                    sys.exit(1)
+                obj.update(x)
+
+            try:
+                options['json_request'] = json.dumps(obj)
+                options['json_request_obj'] = obj
+            except ValueError as e:
+                print(e, file=sys.stderr)
+                sys.exit(1)
+
+
+    if action == 'tag_info':
+        options['tag'] = af_tag
+        
 
     try:
-        # Query for the unprocessed DNS entries.  
-        docs = es.search(index="sfn-dns-event",
-                         body={
-                            "size": qSize, 
-                            "sort": [{"msg_gen_time": {"order": "desc"}}], 
-                            "query": { 
-                                "bool": { 
-                                    "must": [
-                                        {"match": {"threat_category": "wildfire"}}, 
-                                        {"match": {"processed": "0"}}] # end must
-                                 }  # end bool
-                              }
-                           }   # end body
-                        )
+        afapi = pan.afapi.PanAFapi(panrc_tag=options['panrc_tag'],
+                                   api_key=options['api_key'],
+                                   api_version=options['api_version'],
+                                   hostname=options['hostname'],
+                                   timeout=options['timeout'],
+                                   verify_cert=options['ssl'])
 
-        app.logger.info("Found {0} unpropcessed document(s) for {1}"
-                                .format(docs['hits']['total'],"sfn-dns-event"))
+    except pan.afapi.PanAFapiError as e:
+        print('pan.afapi.PanAFapi:', e, file=sys.stderr)
+        sys.exit(1)
 
+    if options['json_request'] is None:
+        options['json_request'] = '{}'
+        options['json_request_obj'] = {}
 
-        priDocIds = list()
-        secDocIds = list()
-        count = 0
-        for entry in docs['hits']['hits']:
-            if entry['_source']['threat_name'] == "generic":
-                secDocIds.append(entry['_id'])
-            else:
-                priDocIds.append(entry['_id'])
-                print(f"{priDocIds} - {entry['_source']['threat_name']}")
-                count += 1
-        #searchDomains('xiterzao.ddns.net',apiKey)
-        print(count) 
+    if options['samples']:
+        af_output = search_results(afapi, options,
+                       afapi.samples_search_results)
         
-        pool = ThreadPool(cpu_count() * 4)
-        results = pool.map(searchDomain, devices)
-        
-    except TransportError:
-        app.logger.warning('Initialization was unable to find the index sfn-dns')
-    
 
+    elif options['tag'] is not None:
+        af_output = tag(afapi, options)
+
+    return af_output
+
+def tag(afapi, options):
+    try:
+        action = 'tag'
+        r = afapi.tag(tagname=options['tag'])
+        print_status(action, r)
+        af_output = print_response(r, options)
+        exit_for_http_status(r)
+        return af_output
+
+    except pan.afapi.PanAFapiError as e:
+        print_exception(action, e)
+        sys.exit(1)
+
+
+def search_results(afapi,
+                   options,
+                   search):
+    request = options['json_request']
+
+    if options['num_results'] is not None:
+        try:
+            obj = json.loads(request)
+            obj['size'] = options['num_results']
+            request = json.dumps(obj)
+        except ValueError as e:
+            print(e, file=sys.stderr)
+            sys.exit(1)
+
+    if options['scope'] is not None:
+        try:
+            obj = json.loads(request)
+            obj['scope'] = options['scope']
+            request = json.dumps(obj)
+        except ValueError as e:
+            print(e, file=sys.stderr)
+            sys.exit(1)
+
+    try:
+        debug = 2
+        for r in search(data=request, terminal=options['terminal']):
+            print_status(r.name, r)
+            if debug > 2:
+                af_output = print_response(r, options)
+        if debug <= 2:
+            af_output = print_response(r, options)
+
+    except pan.afapi.PanAFapiError as e:
+        print_exception(search.__name__, e)
+        sys.exit(1)
+    return af_output
+
+def print_exception(action, e):
+    print('%s:' % action, end='', file=sys.stderr)
+    print(' "%s"' % e, file=sys.stderr)
+
+
+def print_status(action, r):
+    print('%s:' % action, end='', file=sys.stderr)
+
+    if r.http_code is not None:
+        print(' %s' % r.http_code, end='', file=sys.stderr)
+    if r.http_reason is not None:
+        print(' %s' % r.http_reason, end='', file=sys.stderr)
+
+    if r.http_headers is not None:
+        # XXX
+        content_type = r.http_headers.get('content-type')
+        if False and content_type is not None:
+            print(' %s' % content_type, end='', file=sys.stderr)
+        length = r.http_headers.get('content-length')
+        if length is not None:
+            print(' %s' % length, end='', file=sys.stderr)
+
+    if r.json is not None:
+        if 'message' in r.json:
+            print(' "%s"' % r.json['message'],
+                  end='', file=sys.stderr)
+
+        if 'af_complete_percentage' in r.json:
+            print(' %s%%' % r.json['af_complete_percentage'],
+                  end='', file=sys.stderr)
+
+        if 'hits' in r.json:
+            hits = len(r.json['hits'])
+            print(' hits=%d' % hits, end='', file=sys.stderr)
+        elif 'tags' in r.json:
+            print(' tags=%d' % len(r.json['tags']),
+                  end='', file=sys.stderr)
+        elif 'top_tags' in r.json:
+            print(' top_tags=%d' % len(r.json['top_tags']),
+                  end='', file=sys.stderr)
+        elif 'export_list' in r.json:
+            print(' export_list=%d' % len(r.json['export_list']),
+                  end='', file=sys.stderr)
+
+        if 'total' in r.json:
+            print(' total=%d' % r.json['total'],
+                  end='', file=sys.stderr)
+        elif 'total_count' in r.json:
+            print(' total_count=%d' % r.json['total_count'],
+                  end='', file=sys.stderr)
+
+        if 'took' in r.json and r.json['took'] is not None:
+            d = datetime.timedelta(milliseconds=r.json['took'])
+            print(' time=%s' % str(d)[:-3],
+                  end='', file=sys.stderr)
+
+        if 'af_message' in r.json:
+            print(' "%s"' % r.json['af_message'],
+                  end='', file=sys.stderr)
+
+    print(file=sys.stderr)
+
+
+def print_response(r, options):
+    if r.http_text is None:
+        return
+
+    if r.http_headers is not None:
+        x = r.http_headers.get('content-type')
+        if x is None:
+            return
+
+    if x.startswith('text/html'):
+        # XXX
+ #       print(r.http_text)
+        print()
+
+
+    elif x.startswith('application/json'):
+        if options['print_json']:
+            af_output = print_json(r.http_text, isjson=True)
+            return af_output
+
+        if options['print_python']:
+            print_python(r.http_text, isjson=True)
+
+
+def exit_for_http_status(r):
+    if r.http_code is not None:
+        if not (200 <= r.http_code < 300):
+            sys.exit(1)
+        else:
+            return
+    sys.exit(1)
+
+
+def print_json(obj, isjson=False):
+    if isjson:
+        try:
+            obj = json.loads(obj)
+        except ValueError as e:
+            print(e, file=sys.stderr)
+            print(obj, file=sys.stderr)
+            sys.exit(1)
+
+ #   print(json.dumps(obj, sort_keys=True, indent=4,
+ #                    separators=(',', ': ')))
+
+    af_output = json.dumps(obj, sort_keys=True, indent=4,
+                     separators=(',', ': '))
+
+    return af_output
+
+
+def process_arg(s, app, list=False):
+    stdin_char = '-'
+
+    if s == stdin_char:
+        lines = sys.stdin.readlines()
+    else:
+        try:
+            f = open(s)
+            lines = f.readlines()
+            f.close()
+        except IOError:
+            lines = [s]
+
+    app.logger.debug(f'lines: {lines}')
+
+    if list:
+        l = [x.rstrip('\r\n') for x in lines]
+        return l
+
+    lines = ''.join(lines)
+    return lines
 
 def main():
     pass

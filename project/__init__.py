@@ -1,24 +1,17 @@
 # project/__init__.py
 
-import os
-import json
-import datetime
-import threading
-import atexit
 import logging
-import pprint
-from flask import Flask, jsonify
-from flask_bootstrap import Bootstrap
-from elasticsearch import Elasticsearch
-from elasticsearch.exceptions import TransportError
+from flask import Flask
+
 from logging.handlers import RotatingFileHandler
+#from flask.ext.elasticsearch import FlaskElasticsearch
 
 
     
 def create_app():
     '''
-    - Configuration settings come from the main level config.py file
-        and are superseded by project/instance/config.py file.
+    - Configuration settings come from the main level .panrc file
+        and are superseded by project/instance/.panrc file.
     - Create logging handler for application
     - Sets up threading in background to take care of talking to external data
         systems to add to documents in ElasticSearch
@@ -28,82 +21,30 @@ def create_app():
 
     # Instantiate the app
     app = Flask(__name__)
-    Bootstrap(app)
-    # Set config parameters
-    app.config.from_pyfile('config')
-    app.config.from_pyfile('instance/sfn.cfg')
+    ctx = app.app_context()
+    #ctx.push()
     
-    # Set up logging for the application - we may want to revisit this (see #10)
-   
-    handler = RotatingFileHandler('log/sfn.log', 
-                                   maxBytes=10000000, 
-                                   backupCount=10)
-    logFormat = logging.Formatter('[%(asctime)s][%(levelname)s][%(name)s] - %(message)s')
-    handler.setLevel(app.config["LOG_LEVEL"])
-    handler.setFormatter(logFormat)
-    app.logger.addHandler(handler)
-    app.logger.info("\n\n[INIT] SafeNetworking application initializing with log level of {0}\n".format(app.config["LOG_LEVEL"]))
-
-
-    
-
-    
-    # def startProcessing():
-    #     '''
-    #     Initializes the search list and sets the "processed" value to 17 so that
-    #     the app knows that the document has been picked up for processing. It
-    #     then calls the threading/multiprocessing function processDocuments() to
-    #     continually search through ElasticSearch DB for unprocessed docs.
-    #     '''
-    #     # Set up variables used for processing
-    #     docIds = {}
-    #     indexes = ("sfn-dns","sfn-iot")
-    #     qSize = app.config["INIT_QUERY_SIZE"]
-
-    #     try:
-    #         for index in indexes:
-    #             # Search for all docs that have processed set to 0, which means they 
-    #             # have not been processed yet.
-    #             docs = es.search(index=index,body={
-    #                                                 "size": qSize, 
-    #                                                 "query": {
-    #                                                     "match_all": {}
-    #                                                 },
-    #                                                 "sort": [
-    #                                                     {
-    #                                                     "msg_gen_time": {
-    #                                                         "order": "desc"
-    #                                                     }
-    #                                                     }
-    #                                                 ]
-    #                                             }
-    #             )
-    #             app.logger.info(
-    #                         "Found {0} unpropcessed document(s) for {1}"
-    #                                     .format(docs['hits']['total'],index))
-
-    #             for doc in docs['hits']['hits']:
-    #                 docKey = doc['_id']
-    #                 print("{0}".format(docKey))
-    #                 docIds[docKey] = index
-                
-                
-    #     except TransportError:
-    #         app.logger.warning('Initialization was unable to find the index {0}'.format(index))
+    with ctx:
         
-    #     return docIds
+        # Set config parameters
+        app.config.from_pyfile('.panrc')
+        app.config.from_pyfile('instance/.panrc')
+        
+        # Set up logging for the application - we may want to revisit this 
+        # see issue #10 in repo
+    
+        handler = RotatingFileHandler('log/sfn.log', 
+                                    maxBytes=10000000, 
+                                    backupCount=10)
+        logFormat = logging.Formatter('%(asctime)s - %(funcName)s<%(lineno)i> - [%(levelname)s] : %(message)s')
+        handler.setLevel(app.config["LOG_LEVEL"])
+        handler.setFormatter(logFormat)
+        app.logger.addHandler(handler)
+        app.logger.info("\n-------------------------------------------------------------------------------------------\n")
+        app.logger.info(f"INIT - SafeNetworking application initializing with log level of {app.config['LOG_LEVEL']}")
 
-    # # Initiate
-    # docIds = startProcessing()
-    # pprint.pformat(json.dumps(docIds))
-    # app.logger.debug("Found {0}".format(docIds))
+        # Register blueprints
+        from project.api.views import sfn_blueprint
+        app.register_blueprint(sfn_blueprint)
 
-    # When we kill Flask (SIGTERM), we want to clear the trigger for the
-    # next thread
-    # atexit.register(interrupt)
-
-    # Register blueprints
-    from project.api.views import sfn_blueprint
-    app.register_blueprint(sfn_blueprint)
-
-    return app
+        return app
