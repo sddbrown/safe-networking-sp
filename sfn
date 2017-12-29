@@ -259,16 +259,19 @@ def processDNS():
         # find a better way to do this to prevent more lookups.  
        
         # Multiprocess the primary keys
-        with Pool(cpu_count() * 4) as pool:
+        with Pool(cpu_count() * 2) as pool:
             results = pool.map(searchDomain, priDocIds)
         
         print(results)
-        # Loop through the generic/secondary keys and pace so we don't kill AF
-        for entry in secDocIds.keys():
-            searchDomain(entry)
+        
+        # Do the same with the generic/secondary keys and pace so we don't kill AF
+        with Pool(cpu_count() * 2) as pool:
+            results = pool.map(searchDomain, secDocIds)
+        
+        print(results)
 
     except TransportError:
-        app.logger.warning('Initialization was unable to find the indexsfn-dns-event')
+        app.logger.warning('Initialization was unable to find the index sfn-dns-event')
     
 
 

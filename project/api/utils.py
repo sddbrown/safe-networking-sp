@@ -3,7 +3,9 @@ import sys
 import json
 import time
 import datetime
-import pan.afapi
+import requests
+#import autofocus
+#import pan.afapi
 #from __future__ import print_function
 
 
@@ -20,64 +22,108 @@ def calcCacheTimeout(cacheTimeout,lastDate,app):
         return False
 
 
+def getDomainInfo(threatDomain,apiKey,app):
+    searchURL = app.config["AUTOFOCUS_SEARCH_URL"]
+    resultURL = app.config["AUTOFOCUS_RESULTS_URL"]
+    searchData = {"apiKey": apiKey, 
+                    "query": {
+                        "operator": "all", 
+                        "children": [{
+                            "field":"alias.domain",
+                            "operator":"contains",
+                            "value": threatDomain}]}, 
+                    "size": 10, 
+                    "from": 0,
+                    "sort": {"create_date": {"order": "desc"}}, 
+                    "scope": "global", 
+                    "artifactSource": "af"}
+    resultData = {"apiKey": apiKey}
+    headers = {"Content-Type": "application/json"}
+    
+    # Query AF and it returns a "cookie" that we use to view the resutls of the 
+    # search
+    app.logger.debug(f'Gathering domain info for {threatDomain}')
+    queryResults = requests.post(url=searchURL,headers=headers,data=json.dumps(searchData))
+    queryData = queryResults.json()
+    cookie = queryData.get('af_cookie','')
+    cookieURL = resultURL + cookie
+    app.logger.debug(f'Cookie {cookie} returned on query for {threatDomain} using {cookieURL}')
+
+    # Wait for the alloted time before querying AF for search results.  Do check
+    # every minute anyway, in case the search completed as the cookie is only valid
+    # for a limited time after it completes. 
+    for timer in range(app.config["AF_LOOKUP_TIMEOUT"]):
+        time.sleep(60)
+        cookieResults = requests.post(url=cookieURL,headers=headers,data=json.dumps(resultData))
+        cookieData = cookieResults.json()
+        if cookieData.get('af_complete_percentage','') == 100:
+            break
+        else:
+            print(f"not found yet - {cookieData}")
+    return cookieData
+
+
 def updateDetailsDoc(domainDoc,threatDomain,app):
     try:
         apiKey = app.config['AUTOFOCUS_API_KEY']
         hostname = app.config['AUTOFOCUS_HOSTNAME']
 
-        print('calling getTags to obtain domain tags')
-        afOutput = getTags(hostname, apiKey, 'get_tags', threatDomain, False, app)
-        print(f'{afOutput}')
-        return 1
-        # Conver
+        print('query to obtain domain tags')
+        domainDetails = getDomainInfo(threatDomain,apiKey,app)
+        print(f'\n\n\n\n {domainDetails}\n\n\n\n')
 
-        domain_dict = json.loads(af_output)
+#         afOutput = getTags(hostname, apiKey, 'get_tags', threatDomain, False, app)
+#         print(f'{afOutput}')
+#         return 1
+#         # Conver
 
-        for item in domain_dict['hits']:
-            record = item['_source']
-            for item in record:
+#         domain_dict = json.loads(af_output)
 
-# parsing the response to find the tag information
-# then when required, creating a new tag dictionary entry for newly found tags
+#         for item in domain_dict['hits']:
+#             record = item['_source']
+#             for item in record:
 
-                if 'tag' in record:
-                    af_tags = record['tag']
-                    for item in af_tags:
-                        if item in tag_dict:
-                            pass
-                        else:
+# # parsing the response to find the tag information
+# # then when required, creating a new tag dictionary entry for newly found tags
 
-    # for new tags do a secondary query to get the tag type aka the 'tag class' in Autofocus
-    # this captures all tag responses in the local tag dictionary
+#                 if 'tag' in record:
+#                     af_tags = record['tag']
+#                     for item in af_tags:
+#                         if item in tag_dict:
+#                             pass
+#                         else:
 
-                            tag_types = getTags(hostname, api_key, 'tag_info', False, item,app)
-                            tags_dict = json.loads(tag_types)
-                            tag_dict[item] = {}
-                            tag_dict[item]['class'] = tags_dict['tag']['tag_class']
+#     # for new tags do a secondary query to get the tag type aka the 'tag class' in Autofocus
+#     # this captures all tag responses in the local tag dictionary
+
+#                             tag_types = getTags(hostname, api_key, 'tag_info', False, item,app)
+#                             tags_dict = json.loads(tag_types)
+#                             tag_dict[item] = {}
+#                             tag_dict[item]['class'] = tags_dict['tag']['tag_class']
 
 
-                            if not tags_dict['tag_groups']:
-                                pass
-                            else:                      
-                                tag_dict[item]['group'] = tags_dict['tag_groups'][0]['tag_group_name']
+#                             if not tags_dict['tag_groups']:
+#                                 pass
+#                             else:                      
+#                                 tag_dict[item]['group'] = tags_dict['tag_groups'][0]['tag_group_name']
 
-                                # Append tag file with new tag data
-                            with open('tag_data.txt','w') as tagFile:
-                                tagFile.write(json.dumps(tag_dict, indent=4, sort_keys=True))
+#                                 # Append tag file with new tag data
+#                             with open('tag_data.txt','w') as tagFile:
+#                                 tagFile.write(json.dumps(tag_dict, indent=4, sort_keys=True))
 
-    # the application is looking for tags related to a named malware family
-    # If a match then the domain list dictionary is updated with the malware family
+#     # the application is looking for tags related to a named malware family
+#     # If a match then the domain list dictionary is updated with the malware family
                         
-                        if tag_dict[item]['class'] == 'malware_family':
-                          if item in domains_and_tags[dns_domain]['malware']:
-                              pass
-                          else:
-                            domains_and_tags[dns_domain]['malware'].append(item)
+#                         if tag_dict[item]['class'] == 'malware_family':
+#                           if item in domains_and_tags[dns_domain]['malware']:
+#                               pass
+#                           else:
+#                             domains_and_tags[dns_domain]['malware'].append(item)
+# ##
+#         print('\n' + json.dumps(domains_and_tags[dns_domain], indent=4))
 
-        print('\n' + json.dumps(domains_and_tags[dns_domain], indent=4))
 
-
-
+        
         return True
     except KeyError as error:
         print(f"Unable to retrieve AutoFocus API key, verify it is set in instance/.panrc")
@@ -86,282 +132,282 @@ def updateDetailsDoc(domainDoc,threatDomain,app):
     
 
 
-def getTags(hostname, api_key, action, domain, af_tag, app):
+# # def getTags(hostname, api_key, action, domain, af_tag, app):
 
 
-    options = {
-        'sessions': False,
-        'aggregate': False,
-        'histogram': False,
-        'session': None,
-        'samples': False,
-        'sample_analysis': False,
-        'top_tags': False,
-        'tags': False,
-        'tag': None,
-        'export': False,
-        'json_requests': [],
-        'json_request': None,
-        'json_request_obj': None,
-        'num_results': None,
-        'scope': None,
-        'hash': None,
-        'terminal': False,
-        'api_key': api_key,
-        'api_version': None,
-        'hostname': hostname,
-        'ssl': False,
-        'print_python': False,
-        'print_json': True,
-        'debug': 0,
-        'panrc_tag': None,
-        'timeout': None,
-        }
+#     options = {
+#         'sessions': False,
+#         'aggregate': False,
+#         'histogram': False,
+#         'session': None,
+#         'samples': False,
+#         'sample_analysis': False,
+#         'top_tags': False,
+#         'tags': False,
+#         'tag': None,
+#         'export': False,
+#         'json_requests': [],
+#         'json_request': None,
+#         'json_request_obj': None,
+#         'num_results': None,
+#         'scope': None,
+#         'hash': None,
+#         'terminal': False,
+#         'api_key': api_key,
+#         'api_version': None,
+#         'hostname': hostname,
+#         'ssl': False,
+#         'print_python': False,
+#         'print_json': True,
+#         'debug': 0,
+#         'panrc_tag': None,
+#         'timeout': None,
+#         }
 
-    print(f"In getTags with option of {af_tag} and apiKey of {api_key}")
-    if action == 'get_tags':
+#     print(f"In getTags with option of {af_tag} and apiKey of {api_key}")
+#     if action == 'get_tags':
 
-        options['samples'] = True
-        lastYear = int(time.strftime("%Y")) - 1
-        query_arg = '{{"query":{{"operator":"all","children":[{{"field":"alias.domain","operator":"contains","value":"{0}"}},{{"field":"sample.tag_class","operator":"is in the list","value":["malware_family"]}}]}},"scope":"global","size":10,"from":0,"sort":{{"create_date":{{"order":"desc"}}}}}}'.format(domain)
+#         options['samples'] = True
+#         lastYear = int(time.strftime("%Y")) - 1
+#         query_arg = '{{"query":{{"operator":"all","children":[{{"field":"alias.domain","operator":"contains","value":"{0}"}},{{"field":"sample.tag_class","operator":"is in the list","value":["malware_family"]}}]}},"scope":"global","size":10,"from":0,"sort":{{"create_date":{{"order":"desc"}}}}}}'.format(domain)
 
-        options['json_requests'].append(process_arg(query_arg,app))
+#         options['json_requests'].append(process_arg(query_arg,app))
 
-        if options['json_requests']:
-            obj = {}
+#         if options['json_requests']:
+#             obj = {}
             
-            for r in options['json_requests']:
-                try:
-                    x = json.loads(r)
-                except ValueError as e:
-                    print('%s: %s' % (e, r), file=sys.stderr)
-                    sys.exit(1)
-                obj.update(x)
+#             for r in options['json_requests']:
+#                 try:
+#                     x = json.loads(r)
+#                 except ValueError as e:
+#                     print('%s: %s' % (e, r), file=sys.stderr)
+#                     sys.exit(1)
+#                 obj.update(x)
 
-            try:
-                options['json_request'] = json.dumps(obj)
-                options['json_request_obj'] = obj
-            except ValueError as e:
-                print(e, file=sys.stderr)
-                sys.exit(1)
+#             try:
+#                 options['json_request'] = json.dumps(obj)
+#                 options['json_request_obj'] = obj
+#             except ValueError as e:
+#                 print(e, file=sys.stderr)
+#                 sys.exit(1)
 
 
-    if action == 'tag_info':
-        options['tag'] = af_tag
+#     if action == 'tag_info':
+#         options['tag'] = af_tag
         
 
-    try:
-        afapi = pan.afapi.PanAFapi(panrc_tag=options['panrc_tag'],
-                                   api_key=options['api_key'],
-                                   api_version=options['api_version'],
-                                   hostname=options['hostname'],
-                                   timeout=options['timeout'],
-                                   verify_cert=options['ssl'])
+#     try:
+#         afapi = pan.afapi.PanAFapi(panrc_tag=options['panrc_tag'],
+#                                    api_key=options['api_key'],
+#                                    api_version=options['api_version'],
+#                                    hostname=options['hostname'],
+#                                    timeout=options['timeout'],
+#                                    verify_cert=options['ssl'])
 
-    except pan.afapi.PanAFapiError as e:
-        print('pan.afapi.PanAFapi:', e, file=sys.stderr)
-        sys.exit(1)
+#     except pan.afapi.PanAFapiError as e:
+#         print('pan.afapi.PanAFapi:', e, file=sys.stderr)
+#         sys.exit(1)
 
-    if options['json_request'] is None:
-        options['json_request'] = '{}'
-        options['json_request_obj'] = {}
+#     if options['json_request'] is None:
+#         options['json_request'] = '{}'
+#         options['json_request_obj'] = {}
 
-    if options['samples']:
-        af_output = search_results(afapi, options,
-                       afapi.samples_search_results)
+#     if options['samples']:
+#         af_output = search_results(afapi, options,
+#                        afapi.samples_search_results)
         
 
-    elif options['tag'] is not None:
-        af_output = tag(afapi, options)
+#     elif options['tag'] is not None:
+#         af_output = tag(afapi, options)
 
-    return af_output
+#     return af_output
 
-def tag(afapi, options):
-    try:
-        action = 'tag'
-        r = afapi.tag(tagname=options['tag'])
-        print_status(action, r)
-        af_output = print_response(r, options)
-        exit_for_http_status(r)
-        return af_output
+# def tag(afapi, options):
+#     try:
+#         action = 'tag'
+#         r = afapi.tag(tagname=options['tag'])
+#         print_status(action, r)
+#         af_output = print_response(r, options)
+#         exit_for_http_status(r)
+#         return af_output
 
-    except pan.afapi.PanAFapiError as e:
-        print_exception(action, e)
-        sys.exit(1)
-
-
-def search_results(afapi,
-                   options,
-                   search):
-    request = options['json_request']
-
-    if options['num_results'] is not None:
-        try:
-            obj = json.loads(request)
-            obj['size'] = options['num_results']
-            request = json.dumps(obj)
-        except ValueError as e:
-            print(e, file=sys.stderr)
-            sys.exit(1)
-
-    if options['scope'] is not None:
-        try:
-            obj = json.loads(request)
-            obj['scope'] = options['scope']
-            request = json.dumps(obj)
-        except ValueError as e:
-            print(e, file=sys.stderr)
-            sys.exit(1)
-
-    try:
-        debug = 2
-        for r in search(data=request, terminal=options['terminal']):
-            print_status(r.name, r)
-            if debug > 2:
-                af_output = print_response(r, options)
-        if debug <= 2:
-            af_output = print_response(r, options)
-
-    except pan.afapi.PanAFapiError as e:
-        print_exception(search.__name__, e)
-        sys.exit(1)
-    return af_output
-
-def print_exception(action, e):
-    print('%s:' % action, end='', file=sys.stderr)
-    print(' "%s"' % e, file=sys.stderr)
+#     except pan.afapi.PanAFapiError as e:
+#         print_exception(action, e)
+#         sys.exit(1)
 
 
-def print_status(action, r):
-    print('%s:' % action, end='', file=sys.stderr)
+# def search_results(afapi,
+#                    options,
+#                    search):
+#     request = options['json_request']
 
-    if r.http_code is not None:
-        print(' %s' % r.http_code, end='', file=sys.stderr)
-    if r.http_reason is not None:
-        print(' %s' % r.http_reason, end='', file=sys.stderr)
+#     if options['num_results'] is not None:
+#         try:
+#             obj = json.loads(request)
+#             obj['size'] = options['num_results']
+#             request = json.dumps(obj)
+#         except ValueError as e:
+#             print(e, file=sys.stderr)
+#             sys.exit(1)
 
-    if r.http_headers is not None:
-        # XXX
-        content_type = r.http_headers.get('content-type')
-        if False and content_type is not None:
-            print(' %s' % content_type, end='', file=sys.stderr)
-        length = r.http_headers.get('content-length')
-        if length is not None:
-            print(' %s' % length, end='', file=sys.stderr)
+#     if options['scope'] is not None:
+#         try:
+#             obj = json.loads(request)
+#             obj['scope'] = options['scope']
+#             request = json.dumps(obj)
+#         except ValueError as e:
+#             print(e, file=sys.stderr)
+#             sys.exit(1)
 
-    if r.json is not None:
-        if 'message' in r.json:
-            print(' "%s"' % r.json['message'],
-                  end='', file=sys.stderr)
+#     try:
+#         debug = 2
+#         for r in search(data=request, terminal=options['terminal']):
+#             print_status(r.name, r)
+#             if debug > 2:
+#                 af_output = print_response(r, options)
+#         if debug <= 2:
+#             af_output = print_response(r, options)
 
-        if 'af_complete_percentage' in r.json:
-            print(' %s%%' % r.json['af_complete_percentage'],
-                  end='', file=sys.stderr)
+#     except pan.afapi.PanAFapiError as e:
+#         print_exception(search.__name__, e)
+#         sys.exit(1)
+#     return af_output
 
-        if 'hits' in r.json:
-            hits = len(r.json['hits'])
-            print(' hits=%d' % hits, end='', file=sys.stderr)
-        elif 'tags' in r.json:
-            print(' tags=%d' % len(r.json['tags']),
-                  end='', file=sys.stderr)
-        elif 'top_tags' in r.json:
-            print(' top_tags=%d' % len(r.json['top_tags']),
-                  end='', file=sys.stderr)
-        elif 'export_list' in r.json:
-            print(' export_list=%d' % len(r.json['export_list']),
-                  end='', file=sys.stderr)
-
-        if 'total' in r.json:
-            print(' total=%d' % r.json['total'],
-                  end='', file=sys.stderr)
-        elif 'total_count' in r.json:
-            print(' total_count=%d' % r.json['total_count'],
-                  end='', file=sys.stderr)
-
-        if 'took' in r.json and r.json['took'] is not None:
-            d = datetime.timedelta(milliseconds=r.json['took'])
-            print(' time=%s' % str(d)[:-3],
-                  end='', file=sys.stderr)
-
-        if 'af_message' in r.json:
-            print(' "%s"' % r.json['af_message'],
-                  end='', file=sys.stderr)
-
-    print(file=sys.stderr)
+# def print_exception(action, e):
+#     print('%s:' % action, end='', file=sys.stderr)
+#     print(' "%s"' % e, file=sys.stderr)
 
 
-def print_response(r, options):
-    if r.http_text is None:
-        return
+# def print_status(action, r):
+#     print('%s:' % action, end='', file=sys.stderr)
 
-    if r.http_headers is not None:
-        x = r.http_headers.get('content-type')
-        if x is None:
-            return
+#     if r.http_code is not None:
+#         print(' %s' % r.http_code, end='', file=sys.stderr)
+#     if r.http_reason is not None:
+#         print(' %s' % r.http_reason, end='', file=sys.stderr)
 
-    if x.startswith('text/html'):
-        # XXX
- #       print(r.http_text)
-        print()
+#     if r.http_headers is not None:
+#         # XXX
+#         content_type = r.http_headers.get('content-type')
+#         if False and content_type is not None:
+#             print(' %s' % content_type, end='', file=sys.stderr)
+#         length = r.http_headers.get('content-length')
+#         if length is not None:
+#             print(' %s' % length, end='', file=sys.stderr)
+
+#     if r.json is not None:
+#         if 'message' in r.json:
+#             print(' "%s"' % r.json['message'],
+#                   end='', file=sys.stderr)
+
+#         if 'af_complete_percentage' in r.json:
+#             print(' %s%%' % r.json['af_complete_percentage'],
+#                   end='', file=sys.stderr)
+
+#         if 'hits' in r.json:
+#             hits = len(r.json['hits'])
+#             print(' hits=%d' % hits, end='', file=sys.stderr)
+#         elif 'tags' in r.json:
+#             print(' tags=%d' % len(r.json['tags']),
+#                   end='', file=sys.stderr)
+#         elif 'top_tags' in r.json:
+#             print(' top_tags=%d' % len(r.json['top_tags']),
+#                   end='', file=sys.stderr)
+#         elif 'export_list' in r.json:
+#             print(' export_list=%d' % len(r.json['export_list']),
+#                   end='', file=sys.stderr)
+
+#         if 'total' in r.json:
+#             print(' total=%d' % r.json['total'],
+#                   end='', file=sys.stderr)
+#         elif 'total_count' in r.json:
+#             print(' total_count=%d' % r.json['total_count'],
+#                   end='', file=sys.stderr)
+
+#         if 'took' in r.json and r.json['took'] is not None:
+#             d = datetime.timedelta(milliseconds=r.json['took'])
+#             print(' time=%s' % str(d)[:-3],
+#                   end='', file=sys.stderr)
+
+#         if 'af_message' in r.json:
+#             print(' "%s"' % r.json['af_message'],
+#                   end='', file=sys.stderr)
+
+#     print(file=sys.stderr)
 
 
-    elif x.startswith('application/json'):
-        if options['print_json']:
-            af_output = print_json(r.http_text, isjson=True)
-            return af_output
+# def print_response(r, options):
+#     if r.http_text is None:
+#         return
 
-        if options['print_python']:
-            print_python(r.http_text, isjson=True)
+#     if r.http_headers is not None:
+#         x = r.http_headers.get('content-type')
+#         if x is None:
+#             return
 
-
-def exit_for_http_status(r):
-    if r.http_code is not None:
-        if not (200 <= r.http_code < 300):
-            sys.exit(1)
-        else:
-            return
-    sys.exit(1)
+#     if x.startswith('text/html'):
+#         ## XXX
+#  #       print(r.http_text)
+#         print()
 
 
-def print_json(obj, isjson=False):
-    if isjson:
-        try:
-            obj = json.loads(obj)
-        except ValueError as e:
-            print(e, file=sys.stderr)
-            print(obj, file=sys.stderr)
-            sys.exit(1)
+#     elif x.startswith('application/json'):
+#         if options['print_json']:
+#             af_output = print_json(r.http_text, isjson=True)
+#             return af_output
 
- #   print(json.dumps(obj, sort_keys=True, indent=4,
- #                    separators=(',', ': ')))
-
-    af_output = json.dumps(obj, sort_keys=True, indent=4,
-                     separators=(',', ': '))
-
-    return af_output
+#         if options['print_python']:
+#             print_python(r.http_text, isjson=True)
 
 
-def process_arg(s, app, list=False):
-    stdin_char = '-'
+# def exit_for_http_status(r):
+#     if r.http_code is not None:
+#         if not (200 <= r.http_code < 300):
+#             sys.exit(1)
+#         else:
+#             return
+#     sys.exit(1)
 
-    if s == stdin_char:
-        lines = sys.stdin.readlines()
-    else:
-        try:
-            f = open(s)
-            lines = f.readlines()
-            f.close()
-        except IOError:
-            lines = [s]
 
-    app.logger.debug(f'lines: {lines}')
+# def print_json(obj, isjson=False):
+#     if isjson:
+#         try:
+#             obj = json.loads(obj)
+#         except ValueError as e:
+#             print(e, file=sys.stderr)
+#             print(obj, file=sys.stderr)
+#             sys.exit(1)
 
-    if list:
-        l = [x.rstrip('\r\n') for x in lines]
-        return l
+#  #   print(json.dumps(obj, sort_keys=True, indent=4,
+#  #                    separators=(',', ': ')))
 
-    lines = ''.join(lines)
-    return lines
+#     af_output = json.dumps(obj, sort_keys=True, indent=4,
+#                      separators=(',', ': '))
+
+#     return af_output
+
+
+# def process_arg(s, app, list=False):
+#     stdin_char = '-'
+
+#     if s == stdin_char:
+#         lines = sys.stdin.readlines()
+#     else:
+#         try:
+#             f = open(s)
+#             lines = f.readlines()
+#             f.close()
+#         except IOError:
+#             lines = [s]
+
+#     app.logger.debug(f'lines: {lines}')
+
+#     if list:
+#         l = [x.rstrip('\r\n') for x in lines]
+#         return l
+
+#     lines = ''.join(lines)
+#     return lines
 
 def main():
     pass

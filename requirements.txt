@@ -12,6 +12,7 @@ itsdangerous==0.24
 Jinja2==2.10
 MarkupSafe==1.0
 -e git+https://github.com/kevinsteves/pan-python.git@370c99ae3b6b93660394bf7b46493fa4b48b00ef#egg=pan_python
+-e git+https://github.com/PaloAltoNetworks/autofocus-client-library@936430b3efa0e19235a6cf383fb88c6af7f207e4#egg=autofocus-client-library
 pkg-resources==0.0.0
 requests==2.18.4
 urllib3==1.22
