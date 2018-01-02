@@ -4,13 +4,14 @@ import json
 import time
 import datetime
 import requests
+from project import app, es
 from elasticsearch import TransportError, RequestError, ElasticsearchException
 #import autofocus
 #import pan.afapi
 #from __future__ import print_function
 
 
-def calcCacheTimeout(cacheTimeout,lastDate,app):
+def calcCacheTimeout(cacheTimeout,lastDate):
     '''
     Calculate the time difference between two formatted date strings
     '''
@@ -26,7 +27,7 @@ def calcCacheTimeout(cacheTimeout,lastDate,app):
         return False
 
 
-def getDomainInfo(threatDomain,apiKey,app):
+def getDomainInfo(threatDomain,apiKey):
     '''
     Method that uses user supplied api key (instance/.panrc) and gets back a 
     "cookie."  Loops through timer (in minutes - set in instance/.panrc) and
@@ -75,18 +76,22 @@ def getDomainInfo(threatDomain,apiKey,app):
     return domainData
 
 
-def updateDetailsDomainDoc(domainDoc,threatDomain,app):
+def updateDetailsDomainDoc(domainDoc,threatDomain):
     '''
     Method used to update the sfn-details document (dns-doc type) in ES so that 
     we have a "cached" version of the domain details and we don't have to go to 
     AF all the time
     calls getDomainInfo()
     '''
+    retStatusFail = f'{domainDoc} - FAIL'
+    retStatusPass = f'{domainDoc} - PASS'
+    afApiKey = app.config['AUTOFOCUS_API_KEY']
 
-    # Set the doc's processed flag to 17 meaning we at least try it 
+    # Set the doc's processed flag to 17 in ES, meaning we at least try it 
     try:
-        app.es.update(index='sfn-details',doc_type='doc',id=domainDoc,
-                    body={"domain-doc": {"processed": 17}})
+        print(f"domainDoc is {domainDoc}\n")
+        es.update(index='sfn-details',doc_type='domain-doc',id=domainDoc,
+                    body={"doc": {"processed": 17}})
     except TransportError as te:
         app.logger.error(f'Unable to communicate with ES server -{te.info}')
         return retStatusFail
@@ -97,12 +102,8 @@ def updateDetailsDomainDoc(domainDoc,threatDomain,app):
     # call getDomainInfo() and if successful, parse out the info, replace the 
     # current data and update the last_updated value to now
     try:
-        apiKey = app.config['AUTOFOCUS_API_KEY']
-        hostname = app.config['AUTOFOCUS_HOSTNAME']
-
-    
         app.logger.debug(f"Query to obtain gather domain info for {threatDomain}")
-        domainDetails = getDomainInfo(threatDomain,apiKey,app)
+        domainDetails = getDomainInfo(threatDomain,afApiKey)
         print(f'\n\n\n\n {domainDetails}\n\n\n\n')
 
 
