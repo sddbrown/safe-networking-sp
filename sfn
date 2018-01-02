@@ -16,24 +16,14 @@ import unittest
 import datetime
 import threading
 import multiprocessing
-#from datetime import timedelta, datetime
 from random import randint
-from project import app
+from project import app, es
 from project.api.utils import calcCacheTimeout, updateDetailsDomainDoc
-from flask_bootstrap import Bootstrap
 from multiprocessing import cpu_count
 from multiprocessing.dummy import Pool
 from elasticsearch import TransportError, RequestError
-from elasticsearch import Elasticsearch, ElasticsearchException
 
 
-# Create the Flask application 
-app = create_app()
-bs = Bootstrap(app)
-#Set up the ElasticSearch object for our instance of ES 
-es = Elasticsearch([{'host': app.config["ELASTICSEARCH_HOST"],
-                     'port': app.config["ELASTICSEARCH_PORT"]}])
-app.logger.debug(f"ElasticSearch host is: {app.config['ELASTICSEARCH_HOST']}")
 
 
 # This decorator gets kicked off the first time a request is made to the 
@@ -166,7 +156,7 @@ def searchDomain(docID):
             lastUpdated = detailsDoc['hits']['hits'][0]['_source']['last_updated']
             
             # If the domain doc last_updated is older than the setting, we need to update it
-            if (calcCacheTimeout(cacheTimeout,lastUpdated,app)) is not True:
+            if (calcCacheTimeout(cacheTimeout,lastUpdated)) is not True:
                 indexLocal = 3
             elif (foundDomain == threatDomain):
                 indexLocal = 1
@@ -179,7 +169,7 @@ def searchDomain(docID):
             # This acts really wonky and returns the text string AUTOFOCUS_API_KEY
             # need to fix when I have time, but at least it blows up properly 
             try:
-                retCode = updateDetailsDomainDoc(domainDoc,threatDomain,app)
+                retCode = updateDetailsDomainDoc(domainDoc,threatDomain)
             except KeyError as error:
                 print(f"Unable to update domain: {threatDomain} - {error}")
         # if indexLocal == 1:
