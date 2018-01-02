@@ -13,11 +13,13 @@ import json
 import time
 import requests
 import unittest
+import datetime
 import threading
 import multiprocessing
 #from datetime import timedelta, datetime
-from project import create_app
-from project.api.utils import calcCacheTimeout, updateDetailsDoc
+from random import randint
+from project import app
+from project.api.utils import calcCacheTimeout, updateDetailsDomainDoc
 from flask_bootstrap import Bootstrap
 from multiprocessing import cpu_count
 from multiprocessing.dummy import Pool
@@ -99,9 +101,9 @@ def searchDomain(docID):
     the domain in the DB
     '''
     indexLocal = 3
-    retStatusFail = f'{docID}-searchDomain()-FAIL'
-    retStatusPass = f'{docID}-searchDomain()-PASS'
-    cacheTimeout = app.config['DNS_DOMAIN_INFO_TIMEOUT']
+    retStatusFail = f'{docID} - FAIL'
+    retStatusPass = f'{docID} - PASS'
+    cacheTimeout = app.config['DNS_DOMAIN_INFO_MAX_AGE']
 
     app.logger.info(f"Starting process {docID}")
     app.logger.debug(f"{docID} - changing field 'process' to 17")
@@ -139,12 +141,21 @@ def searchDomain(docID):
                                     "must": [{
                                         "match": {"domain_name": threatDomain}}]}}})
         
+        # Sleep for a random time because of the multiprocessing, if we don't we
+        # may actually create the same details doc more than once.  Hopefully 
+        # this will avoid that situation
+        time.sleep(randint(1,6))
+                
         # We don't have the domain in ES, so create the doc associated with it
         if detailsDoc['hits']['total'] == 0:
             indexLocal = 3
-            print("MADE IT!!")
+            now = datetime.datetime.now()
+            createTime = now.strftime('%Y-%m-%dT%H:%M:%SZ')
             ret = es.index(index='sfn-details',doc_type='domain-doc',
-                            body={"domain_name": threatDomain, "last_updated": "2000/01/01 12:00:00","processed": 0})
+                            body={"domain_name": threatDomain, 
+                                  "last_updated": "2000-01-01T12:00:00Z",
+                                  "processed": 0,
+                                  "create_time": createTime})
             domainDoc = ret['_id']
             app.logger.info(f'Local cache for {threatDomain} created: {domainDoc}')
 
@@ -168,7 +179,7 @@ def searchDomain(docID):
             # This acts really wonky and returns the text string AUTOFOCUS_API_KEY
             # need to fix when I have time, but at least it blows up properly 
             try:
-                retCode = updateDetailsDoc(domainDoc,threatDomain,app)
+                retCode = updateDetailsDomainDoc(domainDoc,threatDomain,app)
             except KeyError as error:
                 print(f"Unable to update domain: {threatDomain} - {error}")
         # if indexLocal == 1:
@@ -226,7 +237,7 @@ def processDNS():
         docs = es.search(index="sfn-dns-event",
                          body={
                             "size": qSize, 
-                            "sort": [{"msg_gen_time": {"order": "desc"}}], 
+                            "sort": [{"@timestamp": {"order": "desc"}}], 
                             "query": { 
                                 "bool": { 
                                     "must": [

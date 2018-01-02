@@ -33,19 +33,26 @@ POOL_TIME = 60
 # larger the number, the longer this will take to catch up.  
 DNS_INIT_QUERY_SIZE = 200
 IOT_INIT_QUERY_SIZE = 1000
-SEC_PROCESS_QUERY_SIZE = 1000
+# SEC_PROCESS_QUERY_SIZE = 1000 - what the hell is this for?
 
 # SafeNetworking caches domain info from AutoFocus.  This setting specifies, in 
 # days, how long the cache is ok.  If there is cached info on this domain and it
 # is older than the setting, SFN will query AF and update as necessary and reset
 # the cache "last_updated" setting in ElasticSearch.
-DNS_DOMAIN_INFO_TIMEOUT = 30
+DNS_DOMAIN_INFO_MAX_AGE = 30
 
 # The Autofocus API isn't the speediest thing on the planet.  Usually, the most 
 # pertinent info is within the first couple of minutes of query time.  So, set
 # this to drop out of the processing loop and stop waiting for the query to 
 # finish - which could take 20mins.  No lie....   This is set in minutes
 AF_LOOKUP_TIMEOUT = 1
+
+# The maximum percentage of the AF query we are willing to accept.  If, when we
+# check the timer above, the value is greater than this percentage, we bail out
+# of the loop.  The lower the number, the more likely that we may not get a 
+# result.  Though, usually, 1 minute and 50 percent is enough to get at least 
+# the latest result.
+AF_LOOKUP_MAX_PERCENTAGE = 50
 
 
 

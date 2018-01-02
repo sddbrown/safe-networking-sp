@@ -4,14 +4,18 @@ import json
 import time
 import datetime
 import requests
+from elasticsearch import TransportError, RequestError, ElasticsearchException
 #import autofocus
 #import pan.afapi
 #from __future__ import print_function
 
 
 def calcCacheTimeout(cacheTimeout,lastDate,app):
+    '''
+    Calculate the time difference between two formatted date strings
+    '''
     now = datetime.datetime.now()
-    lastUpdatedDate = datetime.datetime.strptime(lastDate, '%Y/%m/%d %H:%M:%S')
+    lastUpdatedDate = datetime.datetime.strptime(lastDate, '%Y-%m-%dT%H:%M:%SZ')
     calcDate = abs((now - lastUpdatedDate).days) 
 
     if calcDate < cacheTimeout:
@@ -23,6 +27,12 @@ def calcCacheTimeout(cacheTimeout,lastDate,app):
 
 
 def getDomainInfo(threatDomain,apiKey,app):
+    '''
+    Method that uses user supplied api key (instance/.panrc) and gets back a 
+    "cookie."  Loops through timer (in minutes - set in instance/.panrc) and
+    checks both the timer value and the maximum search result percentage and 
+    returns the gathered domain data when either of those values are triggered
+    '''
     searchURL = app.config["AUTOFOCUS_SEARCH_URL"]
     resultURL = app.config["AUTOFOCUS_RESULTS_URL"]
     searchData = {"apiKey": apiKey, 
@@ -43,34 +53,59 @@ def getDomainInfo(threatDomain,apiKey,app):
     # Query AF and it returns a "cookie" that we use to view the resutls of the 
     # search
     app.logger.debug(f'Gathering domain info for {threatDomain}')
-    queryResults = requests.post(url=searchURL,headers=headers,data=json.dumps(searchData))
-    queryData = queryResults.json()
-    cookie = queryData.get('af_cookie','')
+    queryResponse = requests.post(url=searchURL,headers=headers,data=json.dumps(searchData))
+    queryData = queryResponse.json()
+    cookie = queryData['af_cookie']
     cookieURL = resultURL + cookie
     app.logger.debug(f'Cookie {cookie} returned on query for {threatDomain} using {cookieURL}')
 
     # Wait for the alloted time before querying AF for search results.  Do check
     # every minute anyway, in case the search completed as the cookie is only valid
-    # for a limited time after it completes. 
+    # for 2 minutes after it completes. 
     for timer in range(app.config["AF_LOOKUP_TIMEOUT"]):
         time.sleep(60)
         cookieResults = requests.post(url=cookieURL,headers=headers,data=json.dumps(resultData))
-        cookieData = cookieResults.json()
-        if cookieData.get('af_complete_percentage','') == 100:
+        domainData = cookieResults.json()
+        if domainData['af_complete_percentage'] >= app.config["AF_LOOKUP_MAX_PERCENTAGE"]:
             break
         else:
-            print(f"not found yet - {cookieData}")
-    return cookieData
+            app.logger.info(f"Search completion {domainData['af_complete_percentage']}% for {threatDomain} at {timer} minute(s)")
+
+    
+    return domainData
 
 
-def updateDetailsDoc(domainDoc,threatDomain,app):
+def updateDetailsDomainDoc(domainDoc,threatDomain,app):
+    '''
+    Method used to update the sfn-details document (dns-doc type) in ES so that 
+    we have a "cached" version of the domain details and we don't have to go to 
+    AF all the time
+    calls getDomainInfo()
+    '''
+
+    # Set the doc's processed flag to 17 meaning we at least try it 
+    try:
+        app.es.update(index='sfn-details',doc_type='doc',id=domainDoc,
+                    body={"domain-doc": {"processed": 17}})
+    except TransportError as te:
+        app.logger.error(f'Unable to communicate with ES server -{te.info}')
+        return retStatusFail
+    except RequestError as re:
+        app.logger.error(f'Unable to update {docID} - {re.info}')
+        return retStatusFail
+
+    # call getDomainInfo() and if successful, parse out the info, replace the 
+    # current data and update the last_updated value to now
     try:
         apiKey = app.config['AUTOFOCUS_API_KEY']
         hostname = app.config['AUTOFOCUS_HOSTNAME']
 
-        print('query to obtain domain tags')
+    
+        app.logger.debug(f"Query to obtain gather domain info for {threatDomain}")
         domainDetails = getDomainInfo(threatDomain,apiKey,app)
         print(f'\n\n\n\n {domainDetails}\n\n\n\n')
+
+
 
 #         afOutput = getTags(hostname, apiKey, 'get_tags', threatDomain, False, app)
 #         print(f'{afOutput}')
