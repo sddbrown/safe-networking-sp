@@ -67,6 +67,10 @@ app.config['AF_LOOKUP_TIMEOUT'] = 1
 # the latest result.
 app.config['AF_LOOKUP_MAX_PERCENTAGE'] = 50
 #
+# The maximum age for tag info.  This doesn't need to be updated as often as 
+# the domain or other items, but should be done periodically just in case.. 
+# Setting is in days.
+app.config['AF_TAG_INFO_MAX_AGE'] = 120
 #
 #
 # ------------------------------- LOGGING --------------------------------------

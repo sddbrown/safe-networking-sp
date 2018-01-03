@@ -7,23 +7,19 @@
  channels to alert external systems that they are, indeed, intact and 
  functioning
 '''
-import os
-import pdb
+
 import json
 import time
 import requests
 import unittest
 import datetime
 import threading
-import multiprocessing
-from random import randint
+#import multiprocessing
 from project import app, es
-from project.api.utils import calcCacheTimeout, updateDetailsDomainDoc
-from multiprocessing import cpu_count
-from multiprocessing.dummy import Pool
+
+from project.api.sfndns import processDNS
+#from project.api.utils import calcCacheTimeout
 from elasticsearch import TransportError, RequestError
-
-
 
 
 # This decorator gets kicked off the first time a request is made to the 
@@ -82,198 +78,7 @@ def initBackgroundProcs():
     thread.start()
 
 
-def searchDomain(docID):
-    '''
-    Function that discerns if we have the domain locally cached in the ES DB and
-    if we don't (or the cache timeout has elapsed) go and update the sfn-details 
-    index document for that domain.  This prevents us from going to AF 
-    unneccessarily and will make SFN much faster on updates if we already have 
-    the domain in the DB
-    '''
-    indexLocal = 3
-    retStatusFail = f'{docID} - FAIL'
-    retStatusPass = f'{docID} - PASS'
-    cacheTimeout = app.config['DNS_DOMAIN_INFO_MAX_AGE']
 
-    app.logger.info(f"Starting process {docID}")
-    app.logger.debug(f"{docID} - changing field 'process' to 17")
-
-    # Set the doc's processed flag to 17 meaning we at least try it 
-    try:
-        es.update(index='sfn-dns-event',doc_type='doc',id=docID,
-                    body={"doc": {"processed": 17}})
-    except TransportError as te:
-        app.logger.error(f'Unable to communicate with ES server -{te.info}')
-        return retStatusFail
-    except RequestError as re:
-        app.logger.error(f'Unable to update {docID} - {re.info}')
-        return retStatusFail
-    
-    # Get the domain associated with the event doc
-    try:
-        eventDoc = es.get(index="sfn-dns-event",doc_type="doc",
-                                id=docID,_source="domain_name")
-        threatDomain = eventDoc['_source']['domain_name']
-        app.logger.debug(f"Search for domain in {docID} found {threatDomain}")
-    except TransportError as te:
-        app.logger.error(f'Unable to communicate with ES server -{te.info}')
-        return retStatusFail
-    except RequestError as re:
-        app.logger.error(f'Unable to find domain in {docID} - {re.info}')
-        return retStatusFail
-
-    # See if we have the domain info already, if not, go get it
-    try:
-        detailsDoc = es.search(index='sfn-details',
-                                body={
-                                "query": {
-                                    "bool": {
-                                    "must": [{
-                                        "match": {"domain_name": threatDomain}}]}}})
-        
-        # Sleep for a random time because of the multiprocessing, if we don't we
-        # may actually create the same details doc more than once.  Hopefully 
-        # this will avoid that situation
-        time.sleep(randint(1,6))
-                
-        # We don't have the domain in ES, so create the doc associated with it
-        if detailsDoc['hits']['total'] == 0:
-            indexLocal = 3
-            now = datetime.datetime.now()
-            createTime = now.strftime('%Y-%m-%dT%H:%M:%SZ')
-            ret = es.index(index='sfn-details',doc_type='domain-doc',
-                            body={"domain_name": threatDomain, 
-                                  "last_updated": "2000-01-01T12:00:00Z",
-                                  "processed": 0,
-                                  "create_time": createTime})
-            domainDoc = ret['_id']
-            app.logger.info(f'Local cache for {threatDomain} created: {domainDoc}')
-
-        # We have a domain doc in ES 
-        else:
-            domainDoc = detailsDoc['hits']['hits'][0]['_id']
-            foundDomain = detailsDoc['hits']['hits'][0]['_source']['domain_name']
-            lastUpdated = detailsDoc['hits']['hits'][0]['_source']['last_updated']
-            
-            # If the domain doc last_updated is older than the setting, we need to update it
-            if (calcCacheTimeout(cacheTimeout,lastUpdated)) is not True:
-                indexLocal = 3
-            elif (foundDomain == threatDomain):
-                indexLocal = 1
-                app.logger.debug(f'Associating {threatDomain} in event {docID} with {domainDoc}')
-            else:
-                app.logger.info(f'Searching doc {docID} gives {threatDomain}')
-                return 2
-        
-        if indexLocal == 3:
-            # This acts really wonky and returns the text string AUTOFOCUS_API_KEY
-            # need to fix when I have time, but at least it blows up properly 
-            try:
-                retCode = updateDetailsDomainDoc(domainDoc,threatDomain)
-            except KeyError as error:
-                print(f"Unable to update domain: {threatDomain} - {error}")
-        # if indexLocal == 1:
-            # tagUpdate = es.get(index="sfn-details",doc_type="domain-doc",id=domainDoc,_source="tags")
-            # es.update(index='sfn-dns-event', doc_type='doc',id=docID,body={"doc": {"tag": tagUpdate}})
-
-        
-        return retStatusPass
-    except TransportError as te:
-        app.logger.error(f'Unable to communicate with ES server -{te.info}')
-        return retStatusFail
-    except RequestError as re:
-        app.logger.error(f'Unable to update {docID} - {re.info}')
-        return retStatusFail
-   
-    # Second check to see if we already have the domain in sfn-dns-domains index
-    #  If we do, set variable index-local var to 1.
-    #   Next check the age of the index and see if it needs updating and set index-local
-    #   variable to 3 so it will update it.
-    #  Else we do not have it locally and will need to call AF for it.
-    #   create the index for the domain name 
-    #   set variable index-local to 3 so it can go to AF and update
-    #  If variable index-local is set to 3 go to AF and update the index for 
-    #    that domain and set variable index-local to 1
-    # 
-    # If index-local is 1 (it better be) then reference the sfn-dns-domains doc ID
-    #   in the sfn-dns-event doc so that we can later look up the pertinatent data
-    #   and tags for that domain against that event.  
-    #  
-    #  PRAY
-    #
-    #  
-    # 
-
-def processDNS():
-    '''
-    This function is used to gather the unprocessed docs in ElasticSearch and 
-    put them into one of two lists - primary (named threats) or secondary 
-    ("generic" threats.  It will process the latest document up to the maximum 
-    defined number of documents (DNS_INIT_QUERY_SIZE).  The primary threats will
-    be processed in real-time using multiprocessing.  The secondaries will have
-    their "processed" value changed to 55.  This value is searched on by the
-    process  
-    '''
-    #print(f"APP NAME IS {app.__name__}")
-    qSize = app.config["DNS_INIT_QUERY_SIZE"]
-    #apiKey = app.config["AUTOFOCUS_API_KEY"]
-    priDocIds = dict()
-    secDocIds = dict()
-
-    app.logger.debug(f"Gathering {qSize} sfn-dns-events from ElasticSearch")
-
-    try:
-        # Query for the unprocessed DNS entries.  
-        docs = es.search(index="sfn-dns-event",
-                         body={
-                            "size": qSize, 
-                            "sort": [{"@timestamp": {"order": "desc"}}], 
-                            "query": { 
-                                "bool": { 
-                                    "must": [
-                                        {"match": {"threat_category": "wildfire"}}, 
-                                        {"match": {"processed": "0"}}] # end must
-                                 }  # end bool
-                              }
-                           }   # end body
-                        )
-
-        app.logger.info(f"Found {docs['hits']['total']} unpropcessed documents for sfn-dns-event")
-
-
-        for entry in docs['hits']['hits']:
-            docKey = entry['_id']
-            if entry['_source']['threat_name'] == "generic":
-                secDocIds[docKey] = entry['_source']['domain_name']
-                app.logger.debug(f"{docKey} : {secDocIds[docKey]} - {entry['_source']['threat_name']}")
-            else:
-                priDocIds[docKey] = entry['_source']['domain_name']
-                app.logger.debug(f"{docKey} : {priDocIds[docKey]} - {entry['_source']['threat_name']}")
-                       
-        app.logger.info(f"Found {len(priDocIds)} known threats")
-        app.logger.info(f"Found {len(secDocIds)} 'generic' threats")
-        
-        # multiprocessing.Pool will take any iterable but it changes it to a list,
-        # so in our case, the keys get pulled and sent as a list.  This is a 
-        # bummer because the searchDomain is going to have to do the same 
-        # lookup (that we just fricken did) to find the domain name.  Need to
-        # find a better way to do this to prevent more lookups.  
-       
-        # Multiprocess the primary keys
-        with Pool(cpu_count() * 2) as pool:
-            results = pool.map(searchDomain, priDocIds)
-        
-        print(results)
-        
-        # Do the same with the generic/secondary keys and pace so we don't kill AF
-        with Pool(cpu_count() * 2) as pool:
-            results = pool.map(searchDomain, secDocIds)
-        
-        print(results)
-
-    except TransportError:
-        app.logger.warning('Initialization was unable to find the index sfn-dns-event')
-    
 
 
 
