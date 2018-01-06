@@ -8,64 +8,9 @@ from project import app, es
 from collections import OrderedDict
 from multiprocessing import cpu_count
 from multiprocessing.dummy import Pool
-from project.api.utils import calcCacheTimeout
+from project.api.utils import calcCacheTimeout, getNow
 from elasticsearch import TransportError, RequestError, ElasticsearchException
 
-
-def getDomainInfo(threatDomain,apiKey):
-    '''
-    Method that uses user supplied api key (instance/.panrc) and gets back a 
-    "cookie."  Loops through timer (in minutes - set in instance/.panrc) and
-    checks both the timer value and the maximum search result percentage and 
-    returns the gathered domain data when either of those values are triggered
-    '''
-    searchURL = app.config["AUTOFOCUS_SEARCH_URL"]
-    resultURL = app.config["AUTOFOCUS_RESULTS_URL"]
-    lookupTimeout = app.config["AF_LOOKUP_TIMEOUT"]
-    maxPercentage = app.config["AF_LOOKUP_MAX_PERCENTAGE"]
-    resultData = {"apiKey": apiKey}
-    headers = {"Content-Type": "application/json"}
-    searchData = {"apiKey": apiKey, 
-                    "query": {
-                        "operator": "all", 
-                        "children": [{
-                            "field":"alias.domain",
-                            "operator":"contains",
-                            "value": threatDomain}]}, 
-                    "size": 10, 
-                    "from": 0,
-                    "sort": {"create_date": {"order": "desc"}}, 
-                    "scope": "global", 
-                    "artifactSource": "af"}
-    
-    # Query AF and it returns a "cookie" that we use to view the resutls of the 
-    # search
-    app.logger.debug(f'Gathering domain info for {threatDomain}')
-    queryResponse = requests.post(url=searchURL,headers=headers,
-                                  data=json.dumps(searchData))
-    queryData = queryResponse.json()
-    cookie = queryData['af_cookie']
-    cookieURL = resultURL + cookie
-    app.logger.debug(f"Cookie {cookie} returned on query for {threatDomain}" + 
-                     f" using {cookieURL}")
-
-    # Wait for the alloted time before querying AF for search results.  Do check
-    # every minute anyway, in case the search completed as the cookie is only 
-    # valid for 2 minutes after it completes. 
-    for timer in range(lookupTimeout):
-        time.sleep(60)
-        cookieResults = requests.post(url=cookieURL,headers=headers,
-                                      data=json.dumps(resultData))
-        domainData = cookieResults.json()
-        if domainData['af_complete_percentage'] >= maxPercentage :
-            break
-        else:
-            app.logger.info(f"Search completion " +
-                            f"{domainData['af_complete_percentage']}% for " +
-                            f"{threatDomain} at {timer} minute(s)")
-
-    
-    return domainData
 
 def getTagInfo(tagName,apiKey):
     '''
@@ -73,24 +18,15 @@ def getTagInfo(tagName,apiKey):
     the tag specified as tagName.  This doesn't take very long so we don't have
     to do all the crap we did when getting domain info
     '''
-    searchURL = app.config["AUTOFOCUS_SEARCH_URL"] + f"tag/{tagName}"
+    searchURL = app.config["AUTOFOCUS_TAG_URL"] + f"{tagName}"
+    print(searchURL)
     headers = {"Content-Type": "application/json"}
-    searchData = {"apiKey": apiKey}
-    #               "scope": "global",
-    #               "pageNum": 0,
-    #               "pageSize": 3,
-    #               "sortBy": "name",
-    #               "order": "asc",
-    #               "query":{"field": "tag_name",
-    #                        "operator": "is",
-    #                        "value": tagName}
-    #              }
+    data = {"apiKey": apiKey}
     
-    # Query AF and it returns a "cookie" that we use to view the resutls of the 
-    # search
+    # Query AF and get the tag info to be stored in our local ES cache
     app.logger.debug(f'Gathering tag info for {tagName}')
     queryResponse = requests.post(url=searchURL,headers=headers,
-                                  data=json.dumps(searchData))
+                                  data=json.dumps(data))
     queryData = queryResponse.json()
         
     return queryData
@@ -109,7 +45,7 @@ def processTag(tagName):
     # Sleep for a random time because of the multiprocessing, if we don't we  
     # may actually create the same details doc more than once.  Hopefully 
     # this will avoid that situation
-    time.sleep(randint(1,6))
+    time.sleep(randint(1,12))
 
     app.logger.debug(f"Querying local cache for {tagName}")
     # Search to see if we already have a details doc for the tag
@@ -121,16 +57,14 @@ def processTag(tagName):
                                          {"term": {"name.keyword": tagName}}]}}}
                            )
 
-    app.logger.debug(f"Here is the local cache query result for {tagName}: " +
-                     f"{detailsDoc}")
+    app.logger.debug(f"Local cache query result for {tagName}: {detailsDoc}")
 
     # We don't have the tag info in ES, so create the doc associated with it
     if detailsDoc['hits']['total'] == 0:
         app.logger.debug(f"Local cache for {tagName} being created")
-
         indexLocal = 3
         now = datetime.datetime.now()
-        createTime = now.strftime('%Y-%m-%dT%H:%M:%SZ')
+        createTime = getNow()
 
         ret = es.index(index='sfn-details',doc_type='doc',
                         body={"type": "tag-doc", 
@@ -189,7 +123,7 @@ def updateDetailsTagDoc(tagDoc, tagName):
     # call getDomainInfo() and if successful, parse out the info, replace the 
     # current data and update the last_updated value to now
 
-    app.logger.debug(f"Query to obtain gather tag info for " + 
+    app.logger.debug(f"Query to obtain tag info for " + 
                         f"{tagName}")
     tagData = getTagInfo(tagName,afApiKey)
     app.logger.debug(f"Details retreived from getTagInfo(): {tagData}")
@@ -197,11 +131,14 @@ def updateDetailsTagDoc(tagDoc, tagName):
         app.logger.error(f"Unable to get tag info for {tagName}")
         return retStatusFail
 
+    updateTime = getNow()
+
     try:
         es.update(index='sfn-details',doc_type='doc',id=tagDoc,
                     body={"doc": {
                             "processed": 1,
-                            "tags": tagData['tags']}})
+                            "last_updated": updateTime,
+                            "tag": tagData['tag']}})
         return tagData
     
     except TransportError as te:
@@ -211,6 +148,97 @@ def updateDetailsTagDoc(tagDoc, tagName):
         app.logger.error(f'Unable to update {tagDoc} - {re.info}')
         return retStatusFail
     
+
+def classifyTagData(tagDict):
+    '''
+    Takes a dictionary of keys and tags associated tags with each key.  Returns
+    a json formatted hierarchy with the key being the initial key sent, 
+    each tag classified as malware, malicious behavior, exploit, campaign or 
+    actor    
+    '''
+    tagFormattedList = list()
+    retTagData = dict()
+    for key in tagDict:
+        for tagName in tagDict[key]:
+            app.logger.debug(f"Tag is {tagName} in {tagDict[key]}")
+            tagInfo = dict.fromkeys(['public_tag_name','tag_name','tag_class'])
+            detailsDoc = es.search(index='sfn-details',doc_type='doc',
+                           body={
+                            "query": {
+                                "bool": {
+                                "must": [{"term": {"type": "tag-doc"}},
+                                         {"term": {"name.keyword": tagName}}]}}}
+                           )
+
+            if detailsDoc['hits']['total'] != 0:
+                tagInfo['public_tag_name'] = detailsDoc['hits']['hits'][0]['_source']['tag']['public_tag_name']
+                tagInfo['tag_name'] = detailsDoc['hits']['hits'][0]['_source']['tag']['tag_name']
+                tagInfo['tag_class'] = detailsDoc['hits']['hits'][0]['_source']['tag']['tag_class']
+                tagInfo['updated_at'] = f"{key}Z"
+                tagFormattedList.append(tagInfo)
+            else:
+                tagFormattedList.append("NULL")
+
+        app.logger.debug(f"Created tagFormattedList of {tagFormattedList}")
+        
+    return tagFormattedList
+
+
+def getDomainInfo(threatDomain,apiKey):
+    '''
+    Method that uses user supplied api key (.panrc) and gets back a 
+    "cookie."  Loops through timer (in minutes - set in .panrc) and
+    checks both the timer value and the maximum search result percentage and 
+    returns the gathered domain data when either of those values are triggered
+    '''
+    searchURL = app.config["AUTOFOCUS_SEARCH_URL"]
+    resultURL = app.config["AUTOFOCUS_RESULTS_URL"]
+    lookupTimeout = app.config["AF_LOOKUP_TIMEOUT"]
+    maxPercentage = app.config["AF_LOOKUP_MAX_PERCENTAGE"]
+    resultData = {"apiKey": apiKey}
+    headers = {"Content-Type": "application/json"}
+    searchData = {"apiKey": apiKey, 
+                    "query": {
+                        "operator": "all", 
+                        "children": [{
+                            "field":"alias.domain",
+                            "operator":"contains",
+                            "value": threatDomain}]}, 
+                    "size": 10, 
+                    "from": 0,
+                    "sort": {"create_date": {"order": "desc"}}, 
+                    "scope": "global", 
+                    "artifactSource": "af"}
+    
+    # Query AF and it returns a "cookie" that we use to view the resutls of the 
+    # search
+    app.logger.debug(f'Gathering domain info for {threatDomain}')
+    queryResponse = requests.post(url=searchURL,headers=headers,
+                                  data=json.dumps(searchData))
+    queryData = queryResponse.json()
+    cookie = queryData['af_cookie']
+    cookieURL = resultURL + cookie
+    app.logger.debug(f"Cookie {cookie} returned on query for {threatDomain}" + 
+                     f" using {cookieURL}")
+
+    # Wait for the alloted time before querying AF for search results.  Do check
+    # every minute anyway, in case the search completed as the cookie is only 
+    # valid for 2 minutes after it completes. 
+    for timer in range(lookupTimeout):
+        time.sleep(60)
+        cookieResults = requests.post(url=cookieURL,headers=headers,
+                                      data=json.dumps(resultData))
+        domainData = cookieResults.json()
+        if domainData['af_complete_percentage'] >= maxPercentage :
+            break
+        else:
+            app.logger.info(f"Search completion " +
+                            f"{domainData['af_complete_percentage']}% for " +
+                            f"{threatDomain} at {timer} minute(s)")
+
+    
+    return domainData
+
 
 def updateDetailsDomainDoc(domainDoc,threatDomain):
     '''
@@ -237,29 +265,57 @@ def updateDetailsDomainDoc(domainDoc,threatDomain):
     # call getDomainInfo() and if successful, parse out the info, replace the 
     # current data and update the last_updated value to now
     try:
-        app.logger.debug(f"Query to obtain gather domain info for " + 
-                         f"{threatDomain}")
+        app.logger.debug(f"calling getDomainInfo() for {threatDomain}")
         domainDetails = getDomainInfo(threatDomain,afApiKey)
         sampleDict = OrderedDict()
         entryDict = OrderedDict()
-        tagList = list()
+        
 
+        # For each sample entry for the domain
         for item in domainDetails['hits']:
-            tagList = []
-            record = item['_source']
-            entryDate = record['finish_date']
-            for tagName in record['tag']:
-                app.logger.debug(f"Processing tag {tagName} for {domainDoc}")
-                tagData = processTag(tagName)
-                tagList.append(tagName)
-                app.logger.debug(f"{tagData}")
-            entryDict[entryDate] = tagList
+            tagList = list()
+            sample = item['_source']
+            entryDate = sample['finish_date']
 
-        app.logger.debug(f"Dump of entryDict - {json.dumps(entryDict)}")    
+            # If we have tags associated with samples, extract them for each 
+            # sample and then get their meta-data
+            if 'tag' in sample:
+                app.logger.debug(f"Found tag(s) {sample['tag']} in sample")
+                for tagName in sample['tag']:
+                    app.logger.debug(f"Processing tag {tagName} for {domainDoc}")
+                   
+                    tagData = processTag(tagName)
+                    tagList.append(tagName)
+                   
+                    app.logger.debug(f"{tagData}")
+                
+                entryDict[entryDate] = tagList
+                app.logger.debug(f"Sending ordered dict to " +
+                                 f"classifyTagData() {entryDict}")
 
-        return True
+                # Classify the tags that we have against the data stored in ES
+                # and then parse it and add to the domain info
+                tagData = classifyTagData(entryDict)
+                
+                #jsonTagData = json.dumps(tagData)
+                app.logger.debug(f"Received from classifyTagData() - {tagData}")
+                updateTime = getNow()
+                #Now that we have the tag data, associate it with the domain
+                try:
+                    es.update(index='sfn-details',doc_type='doc',id=domainDoc,
+                                body={"doc": {"processed": 1,
+                                              "last_updated": updateTime,
+                                              "sample_tags": tagData  }})
+                except TransportError as te:
+                    app.logger.error(f'Unable to communicate with ES server -{te.info}')
+                    return retStatusFail
+                except RequestError as re:
+                    app.logger.error(f'Unable to update {docID} - {re.info}')
+                    return retStatusFail
+
+        return retStatusPass
     except KeyError as error:
-        app.logger.error(f"Unable to retrieve AutoFocus API key. Returned {error} when getting domain info for {threatDomain}")
+        app.logger.error(f"Received error {error} when getting domain info for {threatDomain}")
         return retStatusFail
 
 
@@ -272,6 +328,7 @@ def searchDomain(docID):
     the domain in the DB
     '''
     indexLocal = 3
+    eventTagged = False
     retStatusFail = f'{docID} - FAIL'
     retStatusPass = f'{docID} - PASS'
     cacheTimeout = app.config['DNS_DOMAIN_INFO_MAX_AGE']
@@ -284,7 +341,8 @@ def searchDomain(docID):
         es.update(index='sfn-dns-event',doc_type='doc',id=docID,
                     body={"doc": {"processed": 17}})
     except TransportError as te:
-        app.logger.error(f'Unable to communicate with ES server -{te.info}')
+        app.logger.error(f"Unable to communicate with ES server while " +
+                         f" updating processed to 17 -{te.info}")
         return retStatusFail
     except RequestError as re:
         app.logger.error(f'Unable to update {docID} - {re.info}')
@@ -297,7 +355,8 @@ def searchDomain(docID):
         threatDomain = eventDoc['_source']['domain_name']
         app.logger.debug(f"Search for domain in {docID} found {threatDomain}")
     except TransportError as te:
-        app.logger.error(f'Unable to communicate with ES server -{te.info}')
+        app.logger.error(f"Unable to communicate with ES server while " +
+                         f"getting domain_name - {te.info}")
         return retStatusFail
     except RequestError as re:
         app.logger.error(f'Unable to find domain in {docID} - {re.info}')
@@ -306,7 +365,7 @@ def searchDomain(docID):
     # Sleep for a random time because of the multiprocessing, if we don't we  
     # may actually create the same details doc more than once.  Hopefully 
     # this will avoid that situation
-    time.sleep(randint(1,6))
+    time.sleep(randint(1,12))
 
     # See if we have the domain info already, if not, go get it
     try:
@@ -322,7 +381,7 @@ def searchDomain(docID):
         if detailsDoc['hits']['total'] == 0:
             indexLocal = 3
             now = datetime.datetime.now()
-            createTime = now.strftime('%Y-%m-%dT%H:%M:%SZ')
+            createTime = getNow()
             ret = es.index(index='sfn-details', doc_type='doc',
                            body={"type": "domain-doc",
                                  "name": threatDomain, 
@@ -353,14 +412,68 @@ def searchDomain(docID):
         # Update the domain details doc
         if indexLocal == 3:
             retCode = updateDetailsDomainDoc(domainDoc,threatDomain)
+            app.logger.debug(f"updateDetailsDomainDoc returned {retCode}")
+            
             if "FAIL" in retCode:
                 app.logger.error(f"Unable to update domain: {threatDomain}")
                 return retStatusFail
-        # if indexLocal == 1:
-            # tagUpdate = es.get(index="sfn-details",doc_type="domain-doc",id=domainDoc,_source="tags")
-            # es.update(index='sfn-dns-event', doc_type='doc',id=docID,body={"doc": {"tag": tagUpdate}})
+            # The update worked and now we have the latest info in ES
+            else:
+                indexLocal = 1
+       
+       
+        if indexLocal == 1:
+            tagList = list()
+            tagInfo = dict.fromkeys(['public_tag_name','tag_name','tag_class','tag_date',"tag_confidence"])
+            domainData = es.get(index="sfn-details",doc_type="doc",id=domainDoc)
+            app.logger.debug(f"ABCDEF : {json.dumps(domainData)}")
+            if domainData['_source']['sample_tags'] is not "NULL": 
+                    while eventTagged != True:
+                        for tag in domainData['_source']['sample_tags']:
+                            app.logger.debug(f"12345 : Working on tag {tag['tag_name']}")
+                            if tag['tag_class'] == "campaign":
+                                tagInfo['public_tag_name'] = tag['public_tag_name']
+                                tagInfo['tag_name'] = tag['tag_name']
+                                tagInfo['tag_class'] = tag['tag_class']
+                                tagInfo['tag_date'] = tag['updated_at']
+                                tagInfo['tag_confidence'] = 90
+                                eventTagged = True
+                                break
+                                
+                            elif tag['tag_class'] == "actor":
+                                tagInfo['public_tag_name'] = tag['public_tag_name']
+                                tagInfo['tag_name'] = tag['tag_name']
+                                tagInfo['tag_class'] = tag['tag_class']
+                                tagInfo['tag_date'] = tag['updated_at']
+                                tagList.append(tagInfo)
 
-        app.logger.debug(f"Return from updateDetailsDomainDoc() is {retCode}")
+                            elif tag['tag_class'] == "malware_family":
+                                app.logger.debug(f"GHIJK: {tag['tag_class']} for {tag['tag_name']}")
+                                tagInfo['public_tag_name'] = tag['public_tag_name']
+                                tagInfo['tag_name'] = tag['tag_name']
+                                tagInfo['tag_class'] = tag['tag_class']
+                                tagInfo['tag_date'] = tag['updated_at']
+                                app.logger.debug(f"LMNO: {json.dumps(tagInfo)}")
+                                tagList.append(tagInfo)
+
+            if not tagList:
+                tagList = ["None"]
+                processedValue =  55
+            else:
+                processedValue = 1
+
+            try:
+                es.update(index='sfn-dns-event', doc_type='doc',id=docID,
+                          body={"doc": {
+                                  "processed": processedValue,
+                                  "sample_tags": tagList}})
+            except TransportError as te:
+                app.logger.error(f'Unable to communicate with ES server -{te.info}')
+                return retStatusFail
+            except RequestError as re:
+                app.logger.error(f'Unable to update {docID} - {re.info}')
+                return retStatusFail
+        
         return retStatusPass
     except TransportError as te:
         app.logger.error(f'Unable to communicate with ES server -{te.info}')
@@ -369,25 +482,6 @@ def searchDomain(docID):
         app.logger.error(f'Unable to update {docID} - {re.info}')
         return retStatusFail
    
-    # Second check to see if we already have the domain in sfn-dns-domains index
-    #  If we do, set variable index-local var to 1.
-    #   Next check the age of the index and see if it needs updating and set index-local
-    #   variable to 3 so it will update it.
-    #  Else we do not have it locally and will need to call AF for it.
-    #   create the index for the domain name 
-    #   set variable index-local to 3 so it can go to AF and update
-    #  If variable index-local is set to 3 go to AF and update the index for 
-    #    that domain and set variable index-local to 1
-    # 
-    # If index-local is 1 (it better be) then reference the sfn-dns-domains doc ID
-    #   in the sfn-dns-event doc so that we can later look up the pertinatent data
-    #   and tags for that domain against that event.  
-    #  
-    #  PRAY
-    #
-    #  
-    #     
-
 
 def processDNS():
     '''

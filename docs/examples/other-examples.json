@@ -1,9 +1,14 @@
-### CREATE MAPPINGS
-############################
+# ElasticSearch stats and counters
+GET /sfn-dns-event/_stats/
+
+########################################################
+###              CREATE MAPPINGS
+########################################################
 PUT sfn-details
 {
   "mappings": {
     "doc": {
+      "dynamic": true,
       "properties": {
         "type": {
           "type": "keyword"
@@ -31,11 +36,47 @@ PUT sfn-details
         },
         "last_updated": {
           "type": "date",
-          "format": "yyyy-MM-dd'T'HH:mm:ss'Z'||yyyy/MM/dd||epoch_millis"
+          "format": "yyyy-MM-dd'T'HH:mm:ss'Z'||yyyy-MM-dd HH:mm:ss"
         },
         "create_time": {
           "type": "date",
-          "format": "yyyy-MM-dd'T'HH:mm:ss'Z'||yyyy/MM/dd||epoch_millis"
+          "format": "yyyy-MM-dd'T'HH:mm:ss'Z'||yyyy-MM-dd HH:mm:ss"
+        },
+        "tag": {
+          "dynamic": true,
+          "properties": {
+            "public_tag_name": {
+              "type": "keyword"
+            },
+            "tag_name": {
+              "type": "keyword"
+            },
+            "tag_class": {
+              "type": "keyword"
+            },
+            "updated_at": {
+              "type": "date",
+              "format": "yyyy-MM-dd'T'HH:mm:ss'Z'||yyyy-MM-dd HH:mm:ss"
+            }
+          }
+        },
+        "tags": {
+          "type": "nested",
+          "properties": {
+            "public_tag_name": {
+              "type": "keyword"
+            },
+            "tag_name": {
+              "type": "keyword"
+            },
+            "tag_class": {
+              "type": "keyword"
+            },
+            "updated_at": {
+              "type": "date",
+              "format": "yyyy-MM-dd'T'HH:mm:ss'Z'||yyyy-MM-dd HH:mm:ss"
+            }
+          }
         },
         "processed": {
           "type": "byte",
@@ -55,6 +96,7 @@ PUT sfn-dns-event
 {
   "mappings": {
     "doc": {
+      "dynamic": true,
       "properties": {
         "@timestamp": {
           "type": "date"
@@ -106,7 +148,7 @@ PUT sfn-dns-event
         },
         "msg_gen_time": {
           "type": "date",
-          "format": "yyyy/MM/dd HH:mm:ss||yyyy/MM/dd||epoch_millis"
+          "format": "yyyy-MM-dd'T'HH:mm:ss'Z'||yyyy-MM-dd HH:mm:ss"
         },
         "sig_num": {
           "type": "integer",
@@ -165,11 +207,20 @@ PUT sfn-dns-event
           }
         },
         "tags": {
-          "type": "text",
-          "fields": {
-            "keyword": {
-              "type": "keyword",
-              "ignore_above": 256
+          "type": "nested",
+          "properties": {
+            "public_tag_name": {
+              "type": "keyword"
+            },
+            "tag_name": {
+              "type": "keyword"
+            },
+            "tag_class": {
+              "type": "keyword"
+            },
+            "updated_at": {
+              "type": "date",
+              "format": "yyyy-MM-dd'T'HH:mm:ss'Z'||yyyy-MM-dd HH:mm:ss"
             }
           }
         },
@@ -205,25 +256,37 @@ PUT sfn-dns-event
   }
 }
 
-############################
-### END CREATE MAPPINGS
+########################################################
+###             END CREATE MAPPINGS
+########################################################
 
-
-### DELETE MAPPINGS
-############################
+########################################################
+###               DELETE MAPPINGS
+########################################################
 DELETE sfn-dns-event
 DELETE sfn-dns
 DELETE sfn-details
 
-############################
-### END DELETE MAPPINGS ###
+########################################################
+###             END DELETE MAPPINGS 
+########################################################
 
 
-###  SFN-DNS-EVENT
-############################
+########################################################
+###                SFN-DNS-EVENT
+########################################################
+
+# Get mappings
 GET sfn-dns-event
+
+
+# Get all docs (random order and limited to top 10)
 GET sfn-dns-event/_search
-GET _search
+
+
+# Get all docs (processing started and may have failed - processed=17 -
+# sort by newest first and limited to top 10)
+GET sfn-dns-event/_search
 {
   "query":{
     "bool": {
@@ -242,6 +305,9 @@ GET _search
   ]
 }
 
+
+# Get all docs that are not processed (processing = 0)
+# Sort by newest first and limited to top 10
 GET sfn-dns-event/_search
 {
   "query": {
@@ -269,13 +335,146 @@ GET sfn-dns-event/_search
   ]
 }
 
-############################
-### END SFN-DNS-EVENT ###
+########################################################
+###          END SFN-DNS-EVENT 
+########################################################
 
 
+########################################################
+###          SFN-DNS-DETAILS
+########################################################
+# Get mappings
+GET sfn-details
 
-### SFN-DNS-UNKNOWN
-############################
+# Get all docs (random order and limited to top 10)
+GET sfn-details/_search
+
+
+# Get all docs (ordered by newest first and limited to 1000)
+GET sfn-details/_search
+{
+  "query": {
+    "match_all":{}
+  },
+  "size": 1000,
+  "sort": [
+    {
+      "last_updated": {
+        "order": "desc"
+      }
+    }
+  ]
+}
+
+
+# Get all tag-docs (ordered by newest first and limited to 1000)
+GET sfn-details/_search
+{
+  "query": {
+    "match":{"type": "tag-doc"}
+    
+  },
+  "size": 1000,
+  "sort": [
+    {
+      "last_updated": {
+        "order": "desc"
+      }
+    }
+  ]
+}
+
+
+# Get domain-docs with name matching domain entered
+GET sfn-details/_search
+{
+  "query": {
+    "bool": {
+      "must": [{"term": {"type": "domain-doc"}},
+              {"term": {"name.keyword": "sadeqq.no-ip.biz"}}]
+    }
+                            }
+}
+
+
+# Get number of representative details docs.  If any of these
+# are more than 1, we have created too many and needs to be dealt with
+GET sfn-details/_search
+{
+    "aggs" : {
+        "domain-details" : {
+            "terms" : { 
+              "field" : "name.keyword", 
+              "size":10000
+            }
+        }
+    },
+    "size" : 0
+}
+
+
+# Get number of representative tag-docs.  If any of these
+# are more than 1, we have created too many and needs to be dealt with
+GET sfn-details/_search
+{
+    "aggs" : {
+        "tags-details" : {
+            "terms" : { "field" : "name.keyword", "size":10000 }
+        }
+    },
+    "size" : 0,
+    "query": {
+      "match":{"type": "tag-doc"}
+    }
+}
+
+
+# Get number of representative domain-docs.  If any of these
+# are more than 1, we have created too many and needs to be dealt with
+GET sfn-details/_search
+{
+    "aggs" : {
+        "tags-details" : {
+            "terms" : { "field" : "name.keyword", "size":10000 }
+        }
+    },
+    "size" : 0,
+    "query": {
+      "match":{"type": "domain-doc"}
+    }
+}
+
+
+# Get details doc where name matches entry
+# Could be domain or tag depending on what is entered as "name" value
+GET sfn-details/_search
+{
+  "query": {
+    "bool": {
+       "must": [{"match": {"name": "fucbrain.ddns.net"}}]
+    }
+  }
+}
+
+# Example push of info to a new domain-doc
+POST sfn-details
+{
+  "type": "domain-doc",
+  "domain_name": "mudsk.ddns.net",
+  "last_updated": "2017/12/15 22:02:47",
+  "processed": 0
+}
+
+########################################################
+###        END SFN-DNS-DETAILS
+########################################################
+
+
+########################################################
+###         SFN-DNS-UNKNOWN
+########################################################
+
+# Get all docs (random order limited to top 10)
 GET sfn-dns-unknown/_search 
 {
   "query": {
@@ -283,6 +482,8 @@ GET sfn-dns-unknown/_search
   }
 }
 
+
+# Get all docs (ordered by newest first and limited to top 10)
 GET sfn-dns-unknown/_search
 {
   "query": {
@@ -297,6 +498,8 @@ GET sfn-dns-unknown/_search
   ]
 }
 
+
+# Example push of info to a new unknown doc
 POST sfn-dns-unknown/doc 
 {
   "@timestamp":"2020-12-06T13:22:13.000Z",
@@ -310,78 +513,9 @@ POST sfn-dns-unknown/doc
 
 }
 
-############################
-### END SFN-DNS-UNKNOWN ###
-
-
-### SFN-DNS-DETAILS
-############################
-GET sfn-details
-
-GET sfn-details/_search
-{
-    "aggs" : {
-        "domain-details" : {
-            "terms" : { 
-              "field" : "name.keyword", 
-              "size":10000
-            }
-        }
-    },
-    "size" : 0
-}
-
-GET sfn-details/_search
-{
-    "aggs" : {
-        "tags-details" : {
-            "terms" : { "field" : "name.keyword", "size":10000 }
-        }
-    },
-    "size" : 0,
-    "query": {
-      "match":{"type": "tag-doc"}
-    }
-}
-
-GET sfn-details/_search
-{
-    "aggs" : {
-        "tags-details" : {
-            "terms" : { "field" : "name.keyword", "size":10000 }
-        }
-    },
-    "size" : 0,
-    "query": {
-      "match":{"type": "domain-doc"}
-    }
-}
-
-GET sfn-details/_search
-{
-  "query": {
-    "match_all":{}
-  }
-}
-GET sfn-details/_search
-{
-  "query": {
-    "bool": {
-       "must": [{"match": {"domain_name": "piixwwxxutwp.in"}}]
-    }
-  }
-}
-
-POST sfn-details
-{
-  "type": "domain-doc",
-  "domain_name": "mudsk.ddns.net",
-  "last_updated": "2017/12/15 22:02:47",
-  "processed": 0
-}
-
-############################
-### END SFN-DNS-DETAILS
+########################################################
+###             END SFN-DNS-UNKNOWN
+########################################################
 
 
 }

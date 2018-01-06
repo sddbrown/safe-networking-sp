@@ -44,7 +44,7 @@ app.config['POOL_TIME'] = 60
 #
 # When SafeNetworking is started, number of documents to read from the DB.  The
 # larger the number, the longer this will take to catch up.  
-app.config['DNS_INIT_QUERY_SIZE'] = 200
+app.config['DNS_INIT_QUERY_SIZE'] = 1000
 app.config['IOT_INIT_QUERY_SIZE'] = 1000
 # app.config['SEC_PROCESS_QUERY_SIZE'] = 1000 - what the hell is this for?
 #
@@ -71,6 +71,11 @@ app.config['AF_LOOKUP_MAX_PERCENTAGE'] = 50
 # the domain or other items, but should be done periodically just in case.. 
 # Setting is in days.
 app.config['AF_TAG_INFO_MAX_AGE'] = 120
+#
+# Dictionary definition of confidence levels represented as max days and the 
+# level associated  - i.e. 3:80 would represent an 80% confidence level if the 
+# item is no more than 3 days old
+app.config['CONFIDENCE_LEVELS'] = "'1':90,'3':80,'7':70,'10':60,'14':50,'21':40"
 #
 #
 # ------------------------------- LOGGING --------------------------------------
@@ -104,6 +109,7 @@ app.config['ELASTICSTACK_VERSION'] = "6.1.1"
 app.config['AUTOFOCUS_HOSTNAME'] = "autofocus.paloaltonetworks.com"
 app.config['AUTOFOCUS_SEARCH_URL'] = "https://autofocus.paloaltonetworks.com/api/v1.0/samples/search"
 app.config['AUTOFOCUS_RESULTS_URL'] = "https://autofocus.paloaltonetworks.com/api/v1.0/samples/results/"
+app.config['AUTOFOCUS_TAG_URL'] = "https://autofocus.paloaltonetworks.com/api/v1.0/tag/"
 #
 #
 
@@ -119,7 +125,7 @@ es = Elasticsearch(f"{app.config['ELASTICSEARCH_HOST']}:{app.config['ELASTICSEAR
 handler = RotatingFileHandler('log/sfn.log', 
                             maxBytes=10000000, 
                             backupCount=10)
-logFormat = logging.Formatter('%(asctime)s - %(funcName)s<%(lineno)i> - [%(levelname)s] : %(message)s')
+logFormat = logging.Formatter('%(asctime)s - %(module)s - %(funcName)s:%(lineno)i - %(thread)d - [%(levelname)s] : %(message)s')
 handler.setLevel(app.config["LOG_LEVEL"])
 handler.setFormatter(logFormat)
 app.logger.addHandler(handler)

@@ -7,19 +7,11 @@
  channels to alert external systems that they are, indeed, intact and 
  functioning
 '''
-
-import json
 import time
 import requests
-import unittest
-import datetime
 import threading
-#import multiprocessing
 from project import app, es
-
 from project.api.sfndns import processDNS
-#from project.api.utils import calcCacheTimeout
-from elasticsearch import TransportError, RequestError
 
 
 # This decorator gets kicked off the first time a request is made to the 
@@ -41,7 +33,7 @@ def activate_job():
     def runIoT():
             while True:
                 print("Run IoT recurring task")
-                time.sleep(3)
+                time.sleep(30)
 
     # Start the DNS processing routines
     threadDNS = threading.Thread(target=runDNS)
@@ -58,28 +50,22 @@ def initBackgroundProcs():
     application to have it's data gathered, maniplutated and stored properly. 
     '''
 
-
     def initProcs():
         not_started = True
-        print('Initializing Background Processes')
         app.logger.info("Initializing Background Processes")
         
         while not_started:
             try:
                 r = requests.get('http://127.0.0.1:5000/')
                 if r.status_code == 200:
-                    print('\nSafeNetworking server started')
+                    app.logger.info('\nSafeNetworking server started')
                     not_started = False
             except:
-                    print('\nServer not yet started')
+                    app.logger.info('\nServer not yet started')
                     time.sleep(2)     
         
     thread = threading.Thread(target=initProcs)
     thread.start()
-
-
-
-
 
 
 from project.api.views import *
