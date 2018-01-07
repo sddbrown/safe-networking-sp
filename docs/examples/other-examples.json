@@ -4,6 +4,44 @@ GET /sfn-dns-event/_stats/
 ########################################################
 ###              CREATE MAPPINGS
 ########################################################
+PUT af-details
+{
+  "mappings": {
+    "doc": {
+      "dynamic": true,
+      "properties": {
+        "@version": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "bucket_info": {
+          "dynamic": true,
+          "properties": {
+            "minute_points": {
+              "type": "integer"
+            },
+            "daily_points": {
+              "type": "integer"
+            },
+            "minute_points_remaining": {
+              "type": "integer"
+            },
+            "daily_points_remaining": {
+              "type": "integer"
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+
 PUT sfn-details
 {
   "mappings": {
@@ -42,7 +80,7 @@ PUT sfn-details
           "type": "date",
           "format": "yyyy-MM-dd'T'HH:mm:ss'Z'||yyyy-MM-dd HH:mm:ss"
         },
-        "tag": {
+        "sample_tag": {
           "dynamic": true,
           "properties": {
             "public_tag_name": {
@@ -60,7 +98,7 @@ PUT sfn-details
             }
           }
         },
-        "tags": {
+        "sample_tags": {
           "type": "nested",
           "properties": {
             "public_tag_name": {
@@ -148,7 +186,11 @@ PUT sfn-dns-event
         },
         "msg_gen_time": {
           "type": "date",
-          "format": "yyyy-MM-dd'T'HH:mm:ss'Z'||yyyy-MM-dd HH:mm:ss"
+          "format": "yyyy-MM-dd'T'HH:mm:ss'Z'||yyyy/MM/dd HH:mm:ss"
+        },
+        "last_updated": {
+          "type": "date",
+          "format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
         },
         "sig_num": {
           "type": "integer",
@@ -206,21 +248,24 @@ PUT sfn-dns-event
             }
           }
         },
-        "tags": {
-          "type": "nested",
+        "event_tag": {
+          "dynamic": true,
           "properties": {
-            "public_tag_name": {
+            "public_name": {
               "type": "keyword"
             },
-            "tag_name": {
+            "name": {
               "type": "keyword"
             },
-            "tag_class": {
+            "class": {
               "type": "keyword"
             },
             "updated_at": {
               "type": "date",
               "format": "yyyy-MM-dd'T'HH:mm:ss'Z'||yyyy-MM-dd HH:mm:ss"
+            },
+            "confidence_level": {
+              "type": "integer"
             }
           }
         },
@@ -261,14 +306,34 @@ PUT sfn-dns-event
 ########################################################
 
 ########################################################
-###               DELETE MAPPINGS
+###               DELETE STUFF
 ########################################################
 DELETE sfn-dns-event
-DELETE sfn-dns
+DELETE sfn-dns-unknown
 DELETE sfn-details
+DELETE af-details
+
+# Delete any doc that has a current processed value of 17.
+# DON'T DO THIS WHILE SFN IS RUNNIG OR YOU WILL HOSE STUFF UP
+POST sfn-details/_delete_by_query
+{
+  "query": {
+    "match": {"processed": 17}
+  }
+}
+
+# Delete any doc that has a current processed value of 17.
+# DON'T DO THIS WHILE SFN IS RUNNIG OR YOU WILL HOSE STUFF UP
+POST sfn-dns-event/_delete_by_query
+{
+  "query": {
+    "match": {"processed": 1}
+  }
+}
+
 
 ########################################################
-###             END DELETE MAPPINGS 
+###             END DELETE STUFF
 ########################################################
 
 
@@ -284,29 +349,7 @@ GET sfn-dns-event
 GET sfn-dns-event/_search
 
 
-# Get all docs (processing started and may have failed - processed=17 -
-# sort by newest first and limited to top 10)
-GET sfn-dns-event/_search
-{
-  "query":{
-    "bool": {
-      "must": [
-        {"match": {"threat_category": "dns"}},
-        {"match": {"processed":"17"}}
-     ]
-    }
-  },
-  "sort": [
-    {
-      "received_at": {
-        "order": "desc"
-      }
-    }
-  ]
-}
-
-
-# Get all docs that are not processed (processing = 0)
+# Get all docs that are not processed (processed = 0)
 # Sort by newest first and limited to top 10
 GET sfn-dns-event/_search
 {
@@ -315,7 +358,7 @@ GET sfn-dns-event/_search
       "must": [
         {
           "match": {
-            "threat_category": "wildfire"
+            "threat_category": "dns-wildfire"
           }
         },
         {
@@ -335,6 +378,104 @@ GET sfn-dns-event/_search
   ]
 }
 
+
+# Get all docs (processing started and may have failed - processed=17 -
+# sort by newest first and limited to top 10)
+GET sfn-dns-event/_search
+{
+  "query":{
+    "bool": {
+      "must": [
+        {"match": {"threat_category": "dns"}},
+        {"match": {"processed":"17"}}
+     ]
+    }
+  },
+  "sort": [
+    {
+      "received_at": {
+        "order": "asc"
+      }
+    }
+  ]
+}
+
+
+# Get all docs that are processed (processed = 1)
+# Sort by last updated first and limited to top 1000
+GET sfn-dns-event/_search
+{
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "match": {
+            "threat_category": "dns-wildfire"
+          }
+        },
+        {
+          "match": {
+            "processed": "1"
+          }
+        }
+      ]
+    }
+  },
+  "size": 1000,
+  "sort": [
+    {
+      "last_updated": {
+        "order": "desc"
+      }
+    }
+  ]
+}
+
+
+# Get all docs that are not processed correctly (processed = 55)
+# Sort by newest first and limited to top 1000
+GET sfn-dns-event/_search
+{
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "match": {
+            "threat_category": "dns-wildfire"
+          }
+        },
+        {
+          "match": {
+            "processed": "55"
+          }
+        }
+      ]
+    }
+  },
+  "size": 1000,
+  "sort": [
+    {
+      "@timestamp": {
+        "order": "desc"
+      }
+    }
+  ]
+}
+
+# Change all of the "stuck" event docs back to processed of 0 so they get 
+# picked up again
+POST sfn-dns-event/_update_by_query
+{
+  "script": {
+    "source": "ctx._source.processed = 0",
+    "lang": "painless"
+  },
+  "query": {
+    "term": {
+      "processed": 17
+    }
+  }
+}
 ########################################################
 ###          END SFN-DNS-EVENT 
 ########################################################
@@ -384,16 +525,93 @@ GET sfn-details/_search
   ]
 }
 
+# Get all domain-docs (ordered by newest first and limited to 1000)
+GET sfn-details/_search
+{
+  "query": {
+    "match":{"type": "domain-doc"}
+    
+  },
+  "size": 1000,
+  "sort": [
+    {
+      "last_updated": {
+        "order": "desc"
+      }
+    }
+  ]
+}
 
-# Get domain-docs with name matching domain entered
+# Get tag-docs with name matching domain entered
 GET sfn-details/_search
 {
   "query": {
     "bool": {
-      "must": [{"term": {"type": "domain-doc"}},
-              {"term": {"name.keyword": "sadeqq.no-ip.biz"}}]
+      "must": [
+        {
+          "term": {
+            "type": "tag-doc"
+          }
+        },
+        {
+          "term": {
+            "name.keyword": "Backdoor.unskal"
+          }
+        }
+      ]
     }
-                            }
+  }
+}
+
+# Get docs where tmll.hopto.org (domain) is in doc and 
+# sample_tags[tag_class] is "malware_family" - there should be only one
+GET sfn-details/_search?q=tmll.hopto.org
+{
+  "query": {
+    "nested": {
+      "path": "sample_tags",
+      "query": {
+        "bool": {
+          "must": [
+            {
+              "match": {
+                "sample_tags.tag_class": "malware_family"
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}
+
+# Get docs where sample_tags[tag_class] is "malware_family"
+# Returns any doc with that in it
+GET sfn-details/_search
+{
+  "query": {
+    "nested": {
+      "path": "sample_tags",
+      "query": {
+        "bool": {
+          "must": [
+            {
+              "match": {
+                "sample_tags.tag_class": "malware_family"
+              }
+            }
+          ]
+        }
+      },
+      "inner_hits": { 
+        "highlight": {
+          "fields": {
+            "sample_tags.tag_class": {}
+          }
+        }
+      }
+    }
+  }
 }
 
 
@@ -451,10 +669,35 @@ GET sfn-details/_search
 {
   "query": {
     "bool": {
-       "must": [{"match": {"name": "fucbrain.ddns.net"}}]
+       "must": [{"match": {"name.keyword": "2lbwbl.mxp4101.com"}}]
     }
   }
 }
+
+
+# Get all docs (processing started and may have failed - processed=17 -
+# sort by newest first and limited to top 10)
+GET sfn-details/_search
+{
+  "query":{
+    "bool": {
+      "must": [
+        {"match": {"processed":"1"}}
+     ]
+    }
+  },
+  "sort": [
+    {
+      "create_time": {
+        "order": "asc"
+      }
+    }
+  ]
+}
+
+
+
+
 
 # Example push of info to a new domain-doc
 POST sfn-details
@@ -483,12 +726,13 @@ GET sfn-dns-unknown/_search
 }
 
 
-# Get all docs (ordered by newest first and limited to top 10)
+# Get all docs (ordered by newest first and limited to top 1000)
 GET sfn-dns-unknown/_search
 {
   "query": {
     "match_all": {}
   },
+  "size": 1000,
   "sort": [
     {
       "@timestamp": {
@@ -517,5 +761,12 @@ POST sfn-dns-unknown/doc
 ###             END SFN-DNS-UNKNOWN
 ########################################################
 
+GET af-details
+GET af-details/_search
+{
+  "query": {
+    "match_all": {}
+  }
+}
 
 }

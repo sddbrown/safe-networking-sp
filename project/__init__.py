@@ -75,20 +75,22 @@ app.config['AF_TAG_INFO_MAX_AGE'] = 120
 # Dictionary definition of confidence levels represented as max days and the 
 # level associated  - i.e. 3:80 would represent an 80% confidence level if the 
 # item is no more than 3 days old
-app.config['CONFIDENCE_LEVELS'] = "'1':90,'3':80,'7':70,'10':60,'14':50,'21':40"
+app.config['CONFIDENCE_LEVELS'] = "{'1':90,'3':80,'7':70,'10':60,'14':50}"
 #
 #
 # ------------------------------- LOGGING --------------------------------------
 #
+# Log level for Flask
+app.config['FLASK_LOGGING_LEVEL'] = "ERROR"
 # Log level for the SafeNetworking application itself.  All files are written
 # to log/sfn.log
 app.config['LOG_LEVEL'] = "WARNING"
 #
 # Size of Log file before rotating - in bytes
-app.config['LOG_SIZE'] = "10000000"
+app.config['LOG_SIZE'] = 10000000
 #
 # Number of log files to keep in log rotation
-app.config['LOG_BACKUPS'] = "10"
+app.config['LOG_BACKUPS'] = 10
 #
 #
 #
@@ -123,9 +125,9 @@ es = Elasticsearch(f"{app.config['ELASTICSEARCH_HOST']}:{app.config['ELASTICSEAR
 # Set up logging for the application - we may want to revisit this 
 # see issue #10 in repo
 handler = RotatingFileHandler('log/sfn.log', 
-                            maxBytes=10000000, 
-                            backupCount=10)
-logFormat = logging.Formatter('%(asctime)s - %(module)s - %(funcName)s:%(lineno)i - %(thread)d - [%(levelname)s] : %(message)s')
+                            maxBytes=app.config['LOG_SIZE'], 
+                            backupCount=app.config['LOG_BACKUPS'])
+logFormat = logging.Formatter('%(asctime)s - %(module)s:%(funcName)s[%(lineno)i] - %(thread)d - [%(levelname)s] -- %(message)s')
 handler.setLevel(app.config["LOG_LEVEL"])
 handler.setFormatter(logFormat)
 app.logger.addHandler(handler)
@@ -136,46 +138,3 @@ app.logger.info(f"ElasticSearch host is: {app.config['ELASTICSEARCH_HOST']}:{app
 from project.api.views import sfn_blueprint
 app.register_blueprint(sfn_blueprint)
 
-
-
-    
-# def create_app():
-#     '''
-#     - Configuration settings come from the main level .panrc file
-#         and are superseded by project/instance/.panrc file.
-#     - Create logging handler for application
-#     - Sets up threading in background to take care of talking to external data
-#         systems to add to documents in ElasticSearch
-#     - Registers all blueprints within the app itself
-#     - Finally, returns the SafeNetworking application.
-#     '''
-
-#     # Instantiate the app
-#     app = Flask(__name__)
-#     ctx = app.app_context()
-#     #ctx.push()
-    
-#     with ctx:
-        
-#         # Set config parameters
-#         app.config.from_pyfile('.panrc')
-#         app.config.from_pyfile('instance/.panrc')
-        
-#         # Set up logging for the application - we may want to revisit this 
-#         # see issue #10 in repo
-    
-#         handler = RotatingFileHandler('log/sfn.log', 
-#                                     maxBytes=10000000, 
-#                                     backupCount=10)
-#         logFormat = logging.Formatter('%(asctime)s - %(funcName)s<%(lineno)i> - [%(levelname)s] : %(message)s')
-#         handler.setLevel(app.config["LOG_LEVEL"])
-#         handler.setFormatter(logFormat)
-#         app.logger.addHandler(handler)
-#         app.logger.info("\n-------------------------------------------------------------------------------------------\n")
-#         app.logger.info(f"INIT - SafeNetworking application initializing with log level of {app.config['LOG_LEVEL']}")
-
-#         # Register blueprints
-#         from project.api.views import sfn_blueprint
-#         app.register_blueprint(sfn_blueprint)
-
-#         return app

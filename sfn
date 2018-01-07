@@ -31,9 +31,12 @@ def activate_job():
             time.sleep(app.config["POOL_TIME"])
     
     def runIoT():
-            while True:
-                print("Run IoT recurring task")
-                time.sleep(30)
+        ''' 
+        DOES NOTHING AS OF NOW - but will do this eventually:
+        Searches for any unprocessed sfn-iot documents and
+        then sends a call to the iot handler to process them.
+        '''
+        pass
 
     # Start the DNS processing routines
     threadDNS = threading.Thread(target=runDNS)
