@@ -249,6 +249,7 @@ def getDomainInfo(threatDomain,apiKey):
     app.logger.debug(f'Gathering domain info for {threatDomain}')
     queryResponse = requests.post(url=searchURL,headers=headers,
                                   data=json.dumps(searchData))
+    app.logger.debug(f"Inittial AF domain query returned {queryResponse.json()}")
     queryData = queryResponse.json()
     cookie = queryData['af_cookie']
     cookieURL = resultURL + cookie
@@ -542,7 +543,7 @@ def searchDomain(docID):
            
             # Only do this if there are actually tags in the domain document.
             # Otherwise, set the event to be processed later (55)
-            print(f"WTF2: {domainData['_source']['sample_tags'][0]['updated_at']}")
+            #print(f"WTF2: {domainData['_source']['sample_tags'][0]['updated_at']}")
             
             if "2000-01-01T12:00:00Z" not in domainData['_source']['sample_tags'][0]['updated_at']: 
                 tagInfo = assessTags(domainData)
@@ -642,7 +643,7 @@ def processDNS():
         app.logger.debug(results)
         
         # Do the same with the generic/secondary keys and pace so we don't kill AF
-        with Pool(cpu_count() * 2) as pool:
+        with Pool(cpu_count() * 4) as pool:
             results = pool.map(searchDomain, secDocIds)
         
         app.logger.debug(results)
