@@ -44,8 +44,8 @@ app.config['POOL_TIME'] = 60
 #
 # When SafeNetworking is started, number of documents to read from the DB.  The
 # larger the number, the longer this will take to catch up.  
-app.config['DNS_INIT_QUERY_SIZE'] = 1000
-app.config['IOT_INIT_QUERY_SIZE'] = 1000
+app.config['DNS_EVENT_QUERY_SIZE'] = 1000
+app.config['IOT_EVENT_QUERY_SIZE'] = 1000
 # app.config['SEC_PROCESS_QUERY_SIZE'] = 1000 - what the hell is this for?
 #
 # SafeNetworking caches domain info from AutoFocus.  This setting specifies, in 
@@ -70,7 +70,7 @@ app.config['AF_LOOKUP_MAX_PERCENTAGE'] = 50
 # The maximum age for tag info.  This doesn't need to be updated as often as 
 # the domain or other items, but should be done periodically just in case.. 
 # Setting is in days.
-app.config['AF_TAG_INFO_MAX_AGE'] = 120
+app.config['DOMAIN_TAG_INFO_MAX_AGE'] = 120
 #
 # Dictionary definition of confidence levels represented as max days and the 
 # level associated  - i.e. 3:80 would represent an 80% confidence level if the 
