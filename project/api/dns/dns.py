@@ -1,14 +1,13 @@
 
-from elasticsearch_dsl import DocType, Search, Date, Integer, Keyword, Text, Ip, connections
+from elasticsearch_dsl import DocType, Search, Date, Integer, Keyword, Text, Ip, connections, InnerDoc, Nested
 
 
 
 class DomainDetailsDoc(DocType):
     name = Text(analyzer='snowball', fields={'raw': Keyword()})
-    body = Text(analyzer='snowball')
     tags = Keyword()
-    created_at = Date()
-    updated_at = Date()
+    doc_created = Date()
+    doc_updated = Date()
     processed = Integer()
     type_of_doc = Text(analyzer='snowball')
 
@@ -23,17 +22,24 @@ class DomainDetailsDoc(DocType):
     def from_obj(cls, obj):
         return cls(
             id=obj.id,
-            body=obj.body,
             name=obj.name,
             tags=obj.tags,
-            created_at=obj.created_at,
-            updated_at=obj.updated_at,
+            doc_created=obj.doc_created,
+            doc_updated=obj.doc_updated,
             processed=obj.processed,
             type_of_doc=obj.type_of_doc
         )
 
     def save(self, **kwargs):
         return super(DomainDetailsDoc, self).save(**kwargs)
+
+
+class EventTag(InnerDoc):
+    tag_name = Text(fields={'raw': Keyword()})
+    public_tag_name = Text(analyzer='snowball')
+    tag_class = Text(fields={'raw': Keyword()})
+    confidence_level = Integer()
+    sample_date = Date()
 
 
 
@@ -43,11 +49,10 @@ class DNSEventDoc(DocType):
     host = Text(analyzer='snowball', fields={'raw': Keyword()})
     threat_id = Text(analyzer='snowball')
     threat_name = Text(analyzer='snowball')
-    event_tag = Keyword()
+    event_tag = Nested(EventTag)
     created_at = Date()
     updated_at = Date()
     processed = Integer()
-    type_of_doc = Text(analyzer='snowball')
     src_ip = Ip()
     dst_ip = Ip()
 
@@ -62,14 +67,27 @@ class DNSEventDoc(DocType):
     def from_obj(cls, obj):
         return cls(
             id=obj.id,
-            title=obj.title,
-            tags=obj.tags,
+            domain_name=obj.domain_name,
+            device_name=obj.device_name,
+            host=obj.host,
+            threat_id=obj.threat_id,
+            event_tag=obj.event_tag,
             created_at=obj.created_at,
             updated_at=obj.updated_at,
             processed=obj.processed,
-            type_of_doc=obj.type_of_doc
+            src_ip=obj.src_ip,
+            dst_ip=obj.dst_ip
         )
 
+
+    # def addEventTag(self, tag_name, public_tag_name,tag_class,
+    #                 confidence_level, sample_date):
+    #     self.event_tag.append(
+    #         EventTag(tag_name=tag_name, public_tag_name=public_tag_name,
+    #                  tag_class=tag_class,confidence_level=confidence_level,
+    #                  sample_date=sample_date))
+    
+    
     def save(self, **kwargs):
         return super(DNSEventDoc, self).save(**kwargs)
 
@@ -113,8 +131,8 @@ class TagDetailsDoc(DocType):
     name = Text(analyzer='snowball', fields={'raw': Keyword()})
     body = Text(analyzer='snowball')
     tag = Keyword()
-    created_at = Date()
-    updated_at = Date()
+    doc_created = Date()
+    doc_updated = Date()
     processed = Integer()
     type_of_doc = Text(analyzer='snowball')
 
@@ -132,8 +150,8 @@ class TagDetailsDoc(DocType):
             body=obj.body,
             name=obj.name,
             tag=obj.tags,
-            created_at=obj.created_at,
-            updated_at=obj.updated_at,
+            doc_created=obj.doc_created,
+            doc_updated=obj.doc_updated,
             processed=obj.processed,
             type_of_doc=obj.type_of_doc
         )

@@ -61,7 +61,7 @@ def initBackgroundProcs():
             try:
                 r = requests.get('http://127.0.0.1:5000/')
                 if r.status_code == 200:
-                    app.logger.info('\nSafeNetworking server started')
+                    #app.logger.info('\nSafeNetworking server started')
                     not_started = False
             except:
                     app.logger.info('\nServer not yet started')

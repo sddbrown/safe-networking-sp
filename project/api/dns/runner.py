@@ -6,9 +6,9 @@ import requests
 from pprint import pprint as pp
 from random import randint
 from project import app, es
-from project.api.dns.dnsutils import getDomainInfo
+from project.api.dns.dnsutils import getDomainInfo, getDomainDoc, assessTags
 from project.api.dns.dns import DomainDetailsDoc, DNSEventDoc
-from project.api.utils import *
+#from project.api.utils import *
 from collections import OrderedDict
 from multiprocessing import cpu_count
 from multiprocessing.dummy import Pool
@@ -50,35 +50,39 @@ def processDNS():
     eventSearch = eventSearch[:qSize]
 
     # Execute the search
-    eventSearch.execute()
-
-    for idx,hit in enumerate(eventSearch):
-        print(idx, hit.threat_name, hit.domain_name)
-    
-        try:
-            domainDoc = DomainDetailsDoc.get(id=hit.domain_name)
-
-            # check age of doc and set to update the details
-            #
-            # updateDetails = True
-
-        except NotFoundError as nfe:
-            app.logger.info(f"Making new doc for domain {hit.domain_name}")
-            updateDetails = True
-
-        if updateDetails:
-            afDomainData = getDomainInfo(hit.domain_name)
-            domainDoc = DomainDetailsDoc(meta={'id': hit.domain_name}, name=hit.domain_name,
-                                            tags=['test'])
-
-            pp(json.dumps(afDomainData))
-            domainDoc.tags = json.dumps(afDomainData)
-            domainDoc.created_at = datetime.datetime.now().isoformat(' ')
-            domainDoc.updated_at = datetime.datetime.now().isoformat(' ')
-            domainDoc.type_of_doc = "domain-doc"
-            domainDoc.save()
+    searchResponse =  eventSearch.execute()
+   
+    for idx,hit in enumerate(searchResponse.hits):
+        #print(idx, hit.threat_name, hit.domain_name)
         
-            app.logger.debug(domainDoc.body)
+        domainDoc = getDomainDoc(hit.domain_name)
+        app.logger.debug(f"Assessing tags for domain-doc {domainDoc.name}")\
+
+        firstTag = domainDoc.tags
+        time.sleep(1)
+        print(f"firstTag is {firstTag}")
+        
+        if "00-00-00T00:00:00:00" in str(firstTag):
+            eventTag = firstTag
+        else: 
+            eventTag = assessTags(domainDoc.tags)
+            print(f"Holy SHIT BALLS!!!!")
+        
+        try:
+            print(hit.meta.id)       
+            eventDoc = DNSEventDoc.get(id=hit.meta.id)
+            time.sleep(2)
+            eventDoc.event_tag = eventTag
+            eventDoc.updated_at = now.isoformat(' ')
+            eventDoc.processed = 1
+            print(eventDoc.to_dict())
+            import pdb
+            pdb.set_trace()
+            eventDoc.save()
+            app.logger.debug(f"Saved event doc with the following data: {eventDoc}")
+        except Exception as e:
+            app.logger.debug(f"Unable to work with event doc by id {hit.meta.id}")
+
             
     exit()
     # qSize = app.config["DNS_INIT_QUERY_SIZE"]
