@@ -11,7 +11,7 @@ import time
 import requests
 import threading
 from project import app, es
-from project.api.sfndns import processDNS
+from project.api.dns.runner import processDNS
 
 
 # This decorator gets kicked off the first time a request is made to the 
@@ -61,7 +61,7 @@ def initBackgroundProcs():
             try:
                 r = requests.get('http://127.0.0.1:5000/')
                 if r.status_code == 200:
-                    app.logger.info('\nSafeNetworking server started')
+                    #app.logger.info('\nSafeNetworking server started')
                     not_started = False
             except:
                     app.logger.info('\nServer not yet started')
