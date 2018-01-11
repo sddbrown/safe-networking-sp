@@ -6,8 +6,6 @@ from flask import Flask
 from flask_bootstrap import Bootstrap
 from flask_elasticsearch import Elasticsearch
 from logging.handlers import RotatingFileHandler
-#from elasticsearch import Elasticsearch, ElasticsearchException
-#from flask.ext.elasticsearch import FlaskElasticsearch
 
 
 # Initialize the app for Flask
@@ -136,6 +134,6 @@ app.logger.info(f"INIT - SafeNetworking application initializing with log level 
 app.logger.info(f"ElasticSearch host is: {app.config['ELASTICSEARCH_HOST']}:{app.config['ELASTICSEARCH_PORT']}")
 
 # Register blueprints
-from project.api.views import sfn_blueprint
+from project.views import sfn_blueprint
 app.register_blueprint(sfn_blueprint)
 

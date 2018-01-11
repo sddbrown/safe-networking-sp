@@ -11,7 +11,7 @@ import time
 import requests
 import threading
 from project import app, es
-from project.api.dns.runner import processDNS
+from project.dns.runner import processDNS
 
 
 # This decorator gets kicked off the first time a request is made to the 
@@ -72,7 +72,7 @@ def initBackgroundProcs():
     thread.start()
 
 
-from project.api.views import *
+from project.views import *
 
 if __name__ == '__main__':
     initBackgroundProcs()

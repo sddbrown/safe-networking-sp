@@ -33,7 +33,7 @@ DNS_EVENT_QUERY_SIZE = 50
 # pertinent info is within the first couple of minutes of query time.  So, set
 # this to drop out of the processing loop and stop waiting for the query to 
 # finish - which could take 20mins.  No lie....   This is set in minutes
-AF_LOOKUP_TIMEOUT = 2
+AF_LOOKUP_TIMEOUT = 3
 #
 # The maximum percentage of the AF query we are willing to accept.  If, when we
 # check the timer above, the value is greater than this percentage, we bail out

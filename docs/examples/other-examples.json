@@ -394,7 +394,6 @@ POST sfn-domain-details/_delete_by_query
 ########################################################
 ###                SFN-DNS-EVENT
 ########################################################
-
 # Get mappings
 GET sfn-dns-event
 
@@ -405,11 +404,12 @@ GET sfn-dns-event/_search
 
 # Get all docs that are not processed (processed = 0)
 # Sort by newest first
-# Jan 10 - 17:15 - 29785 docs
-# Jan 10 - 17:30 - 31454 docs
-# Jan 10 - 17:45 - 32847 docs
-# Jan 10 - 18:15 - 35617 docs
-GET sfn-dns-event/_search
+# Jan 11 - 07:30 -  docs
+# Jan 11 - 08:00 -  docs
+# Jan 11 - 08:30 -  docs
+# Jan 11 - 09:00 -  docs  
+# Jan 11 - 09:30 -  docs  
+GET sfn-dns-event/_search  
 {
   "query": {
     "bool": {
@@ -438,10 +438,11 @@ GET sfn-dns-event/_search
 
 # Get all docs that are processed (processed = 1)
 # Sort by last updated first and limited to last 100
-# Jan 10 - 17:15 - 31 Docs
-# Jan 10 - 17:31 - 80 docs
-# Jan 10 - 17:45 - 133 docs
-# Jan 10 - 18:15 - 216 docs
+# Jan 11 - 07:30 -  docs
+# Jan 11 - 08:00 -  docs
+# Jan 11 - 08:30 -  docs
+# Jan 11 - 09:00 -  docs  
+# Jan 11 - 09:30 -  docs  
 GET sfn-dns-event/_search
 {
   "query": {
@@ -472,24 +473,13 @@ GET sfn-dns-event/_search
 
 
 
-# Get event doc by _id
-GET sfn-dns-event/_search
-{
-"query": {
-    "terms": {
-      "_id": [ "Dh9V3WABApV8EYR8CMn-"] 
-    }
-  }
-}
-
-
-
 # Get all docs that are not processed correctly (processed = 55)
 # Sort by newest first and limited to top 1000
-# Jan 10 - 17:15 - 76 docs
-# Jan 10 - 17:30 - 90 docs
-# Jan 10 - 17:45 - 104 docs
-# Jan 10 - 18:15 - 138 docs
+# Jan 11 - 07:30 -  docs
+# Jan 11 - 08:00 -  docs
+# Jan 11 - 08:30 -  docs
+# Jan 11 - 09:00 -  docs  
+# Jan 11 - 09:30 -  docs  
 GET sfn-dns-event/_search
 {
   "query": {
@@ -519,6 +509,24 @@ GET sfn-dns-event/_search
 }
 
 
+# Get event doc by _id
+GET sfn-dns-event/_search
+{
+"query": {
+    "terms": {
+      "_id": [ "Dh9V3WABApV8EYR8CMn-"] 
+    }
+  }
+}
+
+
+# Get event doc by threat_name field
+GET sfn-dns-event/_search
+{
+"query": {
+    "match": { "threat_name":"Bogus.data"}
+  }
+}
 
 # Change all of the "stuck" event docs back to processed of 0 so they get 
 # picked up again
