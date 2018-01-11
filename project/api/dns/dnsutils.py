@@ -66,7 +66,9 @@ def getTagInfo(tagName):
     queryResponse = requests.post(url=searchURL,headers=headers,
                                   data=json.dumps(data))
     queryData = queryResponse.json()
-        
+
+    app.logger.debug(f"getTagInfo() returns: {queryData}")   
+
     return queryData
 
 
@@ -89,6 +91,8 @@ def processTagList(tagObj):
             app.logger.debug(f"Tag data returned from processTag(): {tagData}")
     else:
         tagData = "NULL"
+
+    app.logger.debug(f"processTagList() returns: {tagList}")
 
     return tagList    
 
@@ -148,16 +152,22 @@ def processTag(tagName):
             tagDoc.doc_updated = now
             tagDoc.type_of_doc = "tag-doc"
             tagDoc.processed = 1
+                
             # Only set the doc_created attribute if we aren't updating 
             if updateType == "Creating":
                 tagDoc.doc_created = now
-            print(f"tagDoc is {tagDoc.to_dict()} ")
+            
+            app.logger.debug(f"tagDoc is {tagDoc.to_dict()} ")
+
             tagDoc.save()
             
             tagDoc = TagDetailsDoc.get(id=tagName)
 
         else:
             return False
+    
+    app.logger.debug(f"processTag() returns: " +
+                     f"{(tagDoc.tag['tag_name'],tagDoc.tag['public_tag_name'],tagDoc.tag['tag_class'])}")
     
     return (tagDoc.tag['tag_name'],tagDoc.tag['public_tag_name'],
             tagDoc.tag['tag_class'])
@@ -209,7 +219,7 @@ def assessTags(tagsObj):
                                "file_type":sampleFileType, 
                                "confidence_level":90}
                     taggedEvent = True
-                    app.logger.debug(f"Tag info for {tagName}: {pp(tagInfo)}")
+                    app.logger.debug(f"Tag info for {tagName}: {tagInfo}")
                     break   # This the grand daddy of all tags 
                             # No need to keep processing the rest
                     
@@ -219,7 +229,7 @@ def assessTags(tagsObj):
                                "file_type":sampleFileType, 
                                "confidence_level":90}
                     taggedEvent = True
-                    app.logger.debug(f"Tag info for {tagName}: {pp(tagInfo)}")
+                    app.logger.debug(f"Tag info for {tagName}: {tagInfo}")
 
 
                 elif (tagClass == "malware_family") and not taggedEvent:
@@ -238,7 +248,7 @@ def assessTags(tagsObj):
                                         f"{tagName} @ date " +
                                         f"{sampleDate}: "+
                                         f"{confLevel} based on" +
-                                        f" age of {dateDiff.days}")
+                                        f" age of {dateDiff.days} days")
                             break # We found the right confidence level
                         else:
                             confLevel = 5
@@ -246,7 +256,7 @@ def assessTags(tagsObj):
                                             f"{tagName} @ date " +
                                             f"{sampleDate}: "+
                                             f"{confLevel} based on" +
-                                            f" age of {dateDiff.days}")
+                                            f" age of {dateDiff.days} days")
 
                     tagInfo = {"tag_name":tagName,"public_tag_name":tag[0],
                                 "tag_class":tagClass,"sample_date":sampleDate,
@@ -257,14 +267,15 @@ def assessTags(tagsObj):
                    
             # Went through all the tags available and none were of interest    
             if not taggedEvent:    
-                tagInfo = dict.fromkeys(['public_tag_name','tag_name','tag_class','sample_date',"confidence_level"])
-                tagInfo['public_tag_name'] = "Not Available"
-                tagInfo['tag_name'] = "Not Available"
-                tagInfo['tag_class'] = "Not Available"
-                tagInfo['sample_date'] = "00-00-00T00:00:00:00"
-                tagInfo['confidence_level'] = confLevel
+                tagInfo = {"tag_name":"Not Available",
+                            "public_tag_name":"Not Available",
+                            "tag_class":"Not Available",
+                            "sample_date":"2000-01-01T00:00:00",
+                            "file_type":"Not Available", 
+                            "confidence_level":0}
                 taggedEvent = True
             
+    app.logger.debug(f"assessTags() returns: {tagInfo}")
 
     return tagInfo  
 
@@ -333,7 +344,7 @@ def getDomainInfo(threatDomain):
         app.logger.error(f"Unable to retrieve domain info from AutoFocus. " +
                          f"The AF query returned {queryData}")
 
-    domainTags = list()
+    #domainTags = list()
     domainObj = list()
 
     if domainData['total'] !=0:
@@ -345,9 +356,11 @@ def getDomainInfo(threatDomain):
            
     else:
         app.logger.debug(f"No samples found for {threatDomain} in time allotted")
-        domainObj.append(("00-00-00T00:00:00:00","None","Not Available for Domain",
-                         "Not Available for Domain", "Not Available for Domain"))
+        domainObj.append(('2000-01-01T00:00:00','None',[('Not Available for Domain',
+                         'Not Available for Domain', 'Not Available for Domain')]))
     
+    app.logger.debug(f"getDomainInfo() returns: {domainObj}")
+
     return domainObj
 
 
@@ -357,6 +370,7 @@ def getDomainDoc(domainName):
     Method to get the local domain doc info and return it to the event 
     processor so it can update the event with the most recent info
     '''
+    domainDoc = "NULL"
     updateDetails = False
     now = datetime.datetime.now().replace(microsecond=0).isoformat(' ')
     timeLimit = (datetime.datetime.now() - 
@@ -370,13 +384,13 @@ def getDomainDoc(domainName):
         
         # check age of doc and set to update the details
         if timeLimit > domainDoc.doc_updated:
-            app.logger.debug(f"Last updated can't be older than {timeLimit} " +
+            app.logger.debug(f"Domain last updated can't be older than {timeLimit} " +
                              f"but it is {domainDoc.doc_updated} and we need to " +
                              f"update cache")
             updateDetails = True
             updateType = "Updating"
         else:
-            app.logger.debug(f"Last updated can't be older than {timeLimit} " +
+            app.logger.debug(f"Domain last updated can't be older than {timeLimit} " +
                              f"and {domainDoc.doc_updated} is not, so don't need" +
                              f" to update cache")
 
@@ -389,15 +403,17 @@ def getDomainDoc(domainName):
     # Either we don't have it or we determined that it's too old
     if updateDetails:
         app.logger.info(f"Making new doc for domain {domainName}")
-        afDomainData = getDomainInfo(domainName)
-        domainDoc = DomainDetailsDoc(meta={'id': domainName},name=domainName)
+        try:
+            afDomainData = getDomainInfo(domainName)
+            domainDoc = DomainDetailsDoc(meta={'id': domainName},name=domainName)
+            domainDoc.tags = afDomainData
+            domainDoc.doc_created = now
+            domainDoc.doc_updated = now
+            domainDoc.save()
+        except Exception as e:
+            app.logger.error(f"Unable to work with domain doc {domainName} - {e}")  
+            domainDoc = "NULL"
 
-        domainDoc.tags = afDomainData
-        domainDoc.doc_created = now
-        domainDoc.doc_updated = now
-        domainDoc.type_of_doc = "domain-doc"
-        domainDoc.save()
-        
-    app.logger.debug(f"Local domain doc contains: {domainDoc}")
+    app.logger.debug(f"getDomainDoc() returns: {domainDoc}")
 
     return domainDoc

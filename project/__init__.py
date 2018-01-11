@@ -23,8 +23,9 @@ app = Flask(__name__)
 # Current version number of SafeNetworking
 app.config['VERSION'] = "0.1-dev"
 #
-# The debug setting for Flask.  Shows messages on *console* 
-app.config['DEBUG'] = False
+# When set to True, this slows down the logging by only processing 1 event at a 
+# time and allows us to see what is going on if there are bugs
+app.config['DEBUG_MODE'] = False
 #
 # Flask setting for where session manager contains the info on the session(s)
 app.config['SESSION_TYPE'] = "filesystem"
@@ -58,7 +59,7 @@ app.config['DNS_DOMAIN_INFO_MAX_AGE'] = 30
 # pertinent info is within the first couple of minutes of query time.  So, set
 # this to drop out of the processing loop and stop waiting for the query to 
 # finish - which could take 20mins.  No lie....   This is set in minutes
-app.config['AF_LOOKUP_TIMEOUT'] = 1
+app.config['AF_LOOKUP_TIMEOUT'] = 3
 #
 # The maximum percentage of the AF query we are willing to accept.  If, when we
 # check the timer above, the value is greater than this percentage, we bail out

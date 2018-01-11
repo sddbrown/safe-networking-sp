@@ -41,16 +41,12 @@ PUT af-details
   }
 }
 
-
-PUT sfn-details
+PUT sfn-domain-details
 {
   "mappings": {
     "doc": {
       "dynamic": true,
       "properties": {
-        "type": {
-          "type": "keyword"
-        },
         "@timestamp": {
           "type": "date"
         },
@@ -72,16 +68,52 @@ PUT sfn-details
             }
           }
         },
-        "last_updated": {
-          "type": "date",
-          "format": "yyyy-MM-dd'T'HH:mm:ss'Z'||yyyy-MM-dd HH:mm:ss"
+        "tags": {
+          "type": "text"
         },
-        "create_time": {
-          "type": "date",
-          "format": "yyyy-MM-dd'T'HH:mm:ss'Z'||yyyy-MM-dd HH:mm:ss"
+        "processed": {
+          "type": "byte",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        }
+      }
+    }
+  }
+}
+PUT sfn-tag-details
+{
+  "mappings": {
+    "doc": {
+      "dynamic": true,
+      "properties": {
+        "@timestamp": {
+          "type": "date"
         },
-        "sample_tag": {
+        "@version": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "name": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "tag": {
           "dynamic": true,
+          "type": "nested",
           "properties": {
             "public_tag_name": {
               "type": "keyword"
@@ -98,21 +130,15 @@ PUT sfn-details
             }
           }
         },
-        "sample_tags": {
+        "tag_groups": {
+          "dynamic": true,
           "type": "nested",
           "properties": {
-            "public_tag_name": {
+            "tag_group_name": {
               "type": "keyword"
             },
-            "tag_name": {
-              "type": "keyword"
-            },
-            "tag_class": {
-              "type": "keyword"
-            },
-            "updated_at": {
-              "type": "date",
-              "format": "yyyy-MM-dd'T'HH:mm:ss'Z'||yyyy-MM-dd HH:mm:ss"
+            "description": {
+              "type": "text"
             }
           }
         },
@@ -184,13 +210,8 @@ PUT sfn-dns-event
             }
           }
         },
-        "msg_gen_time": {
-          "type": "date",
-          "format": "yyyy-MM-dd'T'HH:mm:ss'Z'||yyyy/MM/dd HH:mm:ss"
-        },
-        "last_updated": {
-          "type": "date",
-          "format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+        "updated_at": {
+          "type": "date"
         },
         "sig_num": {
           "type": "integer",
@@ -251,21 +272,53 @@ PUT sfn-dns-event
         "event_tag": {
           "dynamic": true,
           "properties": {
-            "public_name": {
-              "type": "keyword"
+            "tag_name": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 128
+                }
+              }
             },
-            "name": {
-              "type": "keyword"
+            "public_tag_name": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 128
+                }
+              }
             },
-            "class": {
-              "type": "keyword"
+            "tag_class": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 128
+                }
+              }
             },
-            "updated_at": {
-              "type": "date",
-              "format": "yyyy-MM-dd'T'HH:mm:ss'Z'||yyyy-MM-dd HH:mm:ss"
+            "file_type": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 128
+                }
+              }
             },
             "confidence_level": {
-              "type": "integer"
+              "type": "integer",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "sample_date": {
+              "type": "date"
             }
           }
         },
@@ -310,24 +363,25 @@ PUT sfn-dns-event
 ########################################################
 DELETE sfn-dns-event
 DELETE sfn-dns-unknown
-DELETE sfn-details
+DELETE sfn-domain-details
+DELETE sfn-tag-details
 DELETE af-details
 
-# Delete any doc that has a current processed value of 17.
-# DON'T DO THIS WHILE SFN IS RUNNIG OR YOU WILL HOSE STUFF UP
-POST sfn-details/_delete_by_query
-{
-  "query": {
-    "match": {"processed": 17}
-  }
-}
 
 # Delete any doc that has a current processed value of 17.
 # DON'T DO THIS WHILE SFN IS RUNNIG OR YOU WILL HOSE STUFF UP
 POST sfn-dns-event/_delete_by_query
 {
   "query": {
-    "match": {"processed": 1}
+    "match": {"processed": 17}
+  }
+}
+
+
+POST sfn-domain-details/_delete_by_query
+{
+  "query": {
+    "match": {"name": "mytest.net"}
   }
 }
 
@@ -345,12 +399,16 @@ POST sfn-dns-event/_delete_by_query
 GET sfn-dns-event
 
 
-# Get all docs (random order and limited to top 10)
+# Get all docs (random order)
 GET sfn-dns-event/_search
 
 
 # Get all docs that are not processed (processed = 0)
-# Sort by newest first and limited to top 10
+# Sort by newest first
+# Jan 10 - 17:15 - 29785 docs
+# Jan 10 - 17:30 - 31454 docs
+# Jan 10 - 17:45 - 32847 docs
+# Jan 10 - 18:15 - 35617 docs
 GET sfn-dns-event/_search
 {
   "query": {
@@ -378,31 +436,12 @@ GET sfn-dns-event/_search
   ]
 }
 
-
-# Get all docs (processing started and may have failed - processed=17 -
-# sort by newest first and limited to top 10)
-GET sfn-dns-event/_search
-{
-  "query":{
-    "bool": {
-      "must": [
-        {"match": {"threat_category": "dns"}},
-        {"match": {"processed":"17"}}
-     ]
-    }
-  },
-  "sort": [
-    {
-      "received_at": {
-        "order": "asc"
-      }
-    }
-  ]
-}
-
-
 # Get all docs that are processed (processed = 1)
-# Sort by last updated first and limited to top 1000
+# Sort by last updated first and limited to last 100
+# Jan 10 - 17:15 - 31 Docs
+# Jan 10 - 17:31 - 80 docs
+# Jan 10 - 17:45 - 133 docs
+# Jan 10 - 18:15 - 216 docs
 GET sfn-dns-event/_search
 {
   "query": {
@@ -421,10 +460,10 @@ GET sfn-dns-event/_search
       ]
     }
   },
-  "size": 1000,
+  "size": 100,
   "sort": [
     {
-      "last_updated": {
+      "updated_at": {
         "order": "desc"
       }
     }
@@ -432,8 +471,25 @@ GET sfn-dns-event/_search
 }
 
 
+
+# Get event doc by _id
+GET sfn-dns-event/_search
+{
+"query": {
+    "terms": {
+      "_id": [ "Dh9V3WABApV8EYR8CMn-"] 
+    }
+  }
+}
+
+
+
 # Get all docs that are not processed correctly (processed = 55)
 # Sort by newest first and limited to top 1000
+# Jan 10 - 17:15 - 76 docs
+# Jan 10 - 17:30 - 90 docs
+# Jan 10 - 17:45 - 104 docs
+# Jan 10 - 18:15 - 138 docs
 GET sfn-dns-event/_search
 {
   "query": {
@@ -455,12 +511,14 @@ GET sfn-dns-event/_search
   "size": 1000,
   "sort": [
     {
-      "@timestamp": {
+      "updated_at": {
         "order": "desc"
       }
     }
   ]
 }
+
+
 
 # Change all of the "stuck" event docs back to processed of 0 so they get 
 # picked up again
@@ -472,7 +530,7 @@ POST sfn-dns-event/_update_by_query
   },
   "query": {
     "term": {
-      "processed": 17
+      "processed": 55
     }
   }
 }
@@ -482,17 +540,16 @@ POST sfn-dns-event/_update_by_query
 
 
 ########################################################
-###          SFN-DNS-DETAILS
+###          SFN-DOMAIN-DETAILS
 ########################################################
 # Get mappings
-GET sfn-details
-
+GET sfn-domain-details
 # Get all docs (random order and limited to top 10)
-GET sfn-details/_search
+GET sfn-domain-details/_search
 
 
 # Get all docs (ordered by newest first and limited to 1000)
-GET sfn-details/_search
+GET sfn-domain-details/_search
 {
   "query": {
     "match_all":{}
@@ -500,7 +557,7 @@ GET sfn-details/_search
   "size": 1000,
   "sort": [
     {
-      "last_updated": {
+      "doc_updated": {
         "order": "desc"
       }
     }
@@ -508,116 +565,28 @@ GET sfn-details/_search
 }
 
 
-# Get all tag-docs (ordered by newest first and limited to 1000)
-GET sfn-details/_search
-{
-  "query": {
-    "match":{"type": "tag-doc"}
-    
-  },
-  "size": 1000,
-  "sort": [
-    {
-      "last_updated": {
-        "order": "desc"
-      }
-    }
-  ]
-}
 
-# Get all domain-docs (ordered by newest first and limited to 1000)
-GET sfn-details/_search
-{
-  "query": {
-    "match":{"type": "domain-doc"}
-    
-  },
-  "size": 1000,
-  "sort": [
-    {
-      "last_updated": {
-        "order": "desc"
-      }
-    }
-  ]
-}
-
-# Get tag-docs with name matching domain entered
-GET sfn-details/_search
+# Get docs where sample_tags[tag_class] is "malware_family"
+# Returns any doc with that in it
+GET sfn-domain-details/_search
 {
   "query": {
     "bool": {
       "must": [
         {
-          "term": {
-            "type": "tag-doc"
-          }
-        },
-        {
-          "term": {
-            "name.keyword": "Backdoor.unskal"
+          "match": {
+            "tags.tag_class": "malware_family"
           }
         }
       ]
     }
   }
 }
-
-# Get docs where tmll.hopto.org (domain) is in doc and 
-# sample_tags[tag_class] is "malware_family" - there should be only one
-GET sfn-details/_search?q=tmll.hopto.org
-{
-  "query": {
-    "nested": {
-      "path": "sample_tags",
-      "query": {
-        "bool": {
-          "must": [
-            {
-              "match": {
-                "sample_tags.tag_class": "malware_family"
-              }
-            }
-          ]
-        }
-      }
-    }
-  }
-}
-
-# Get docs where sample_tags[tag_class] is "malware_family"
-# Returns any doc with that in it
-GET sfn-details/_search
-{
-  "query": {
-    "nested": {
-      "path": "sample_tags",
-      "query": {
-        "bool": {
-          "must": [
-            {
-              "match": {
-                "sample_tags.tag_class": "malware_family"
-              }
-            }
-          ]
-        }
-      },
-      "inner_hits": { 
-        "highlight": {
-          "fields": {
-            "sample_tags.tag_class": {}
-          }
-        }
-      }
-    }
-  }
-}
-
+  
 
 # Get number of representative details docs.  If any of these
 # are more than 1, we have created too many and needs to be dealt with
-GET sfn-details/_search
+GET sfn-domain-details/_search
 {
     "aggs" : {
         "domain-details" : {
@@ -631,87 +600,143 @@ GET sfn-details/_search
 }
 
 
-# Get number of representative tag-docs.  If any of these
-# are more than 1, we have created too many and needs to be dealt with
-GET sfn-details/_search
-{
-    "aggs" : {
-        "tags-details" : {
-            "terms" : { "field" : "name.keyword", "size":10000 }
-        }
-    },
-    "size" : 0,
-    "query": {
-      "match":{"type": "tag-doc"}
-    }
-}
-
-
-# Get number of representative domain-docs.  If any of these
-# are more than 1, we have created too many and needs to be dealt with
-GET sfn-details/_search
-{
-    "aggs" : {
-        "tags-details" : {
-            "terms" : { "field" : "name.keyword", "size":10000 }
-        }
-    },
-    "size" : 0,
-    "query": {
-      "match":{"type": "domain-doc"}
-    }
-}
-
 
 # Get details doc where name matches entry
-# Could be domain or tag depending on what is entered as "name" value
 GET sfn-details/_search
 {
   "query": {
     "bool": {
-       "must": [{"match": {"name.keyword": "2lbwbl.mxp4101.com"}}]
+       "must": [{"match": {"name": "orrent-port5478.ddns.net"}}]
     }
   }
 }
 
 
-# Get all docs (processing started and may have failed - processed=17 -
-# sort by newest first and limited to top 10)
-GET sfn-details/_search
+
+# Example push of info to a new domain-doc
+POST sfn-domain-details/doc/mytest.net
 {
-  "query":{
-    "bool": {
-      "must": [
-        {"match": {"processed":"1"}}
-     ]
-    }
+  "name": "mytest.net",
+  "doc_updated": "2017-12-15 22:02:47",
+  "processed": 0
+}
+
+########################################################
+###        END SFN-DOMAIN-DETAILS
+########################################################
+
+########################################################
+###          SFN-TAG-DETAILS
+########################################################
+# Get mappings
+GET sfn-tag-details
+
+# Get all docs (random order and limited to top 10)
+GET sfn-tag-details/_search
+
+
+# Get all docs (ordered by newest first and limited to 1000)
+GET sfn-tag-details/_search
+{
+  "query": {
+    "match_all":{}
   },
+  "size": 100,
   "sort": [
     {
-      "create_time": {
-        "order": "asc"
+      "doc_updated": {
+        "order": "desc"
       }
     }
   ]
 }
 
 
+# Get tag-docs with name matching domain entered
+GET sfn-tag-details/_search
+{
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "term": {
+            "name.keyword": "Unit42.DisableFileOpenWarning"
+          }
+        }
+      ]
+    }
+  }
+}
 
+
+# Get docs where tag[tag_class] is "malware_family"
+# Returns any doc with that in it
+GET sfn-tag-details/_search
+{
+  "query": {
+    "nested": {
+      "path": "tag",
+      "query": {
+        "bool": {
+          "must": [
+            {
+              "match": {
+                "tag.tag_class": "malware_family"
+              }
+            }
+          ]
+        }
+      },
+      "inner_hits": { 
+        "highlight": {
+          "fields": {
+            "tag.tag_class": {}
+          }
+        }
+      }
+    }
+  }
+}
+
+
+# Get number of representative details docs.  If any of these
+# are more than 1, we have created too many and needs to be dealt with
+GET sfn-tag-details/_search
+{
+    "aggs" : {
+        "domain-details" : {
+            "terms" : { 
+              "field" : "name.keyword", 
+              "size":10000
+            }
+        }
+    },
+    "size" : 0
+}
+
+
+# Get details doc where name matches entry
+GET sfn-tag-details/_search
+{
+  "query": {
+    "bool": {
+       "must": [{"match": {"title": "Hello World!"}}]
+    }
+  }
+}
 
 
 # Example push of info to a new domain-doc
-POST sfn-details
+POST sfn-tag-details/doc/Unit42.SPSolutionsTest
 {
-  "type": "domain-doc",
-  "domain_name": "mudsk.ddns.net",
-  "last_updated": "2017/12/15 22:02:47",
-  "processed": 0
+  "name": "mytest.net",
+  "last_updated": "2017-12-15 22:02:47",
+  "processed": 100
 }
 
 ########################################################
-###        END SFN-DNS-DETAILS
+###        END SFN-TAG-DETAILS
 ########################################################
-
 
 ########################################################
 ###         SFN-DNS-UNKNOWN

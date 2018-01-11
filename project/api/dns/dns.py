@@ -1,5 +1,5 @@
 
-from elasticsearch_dsl import DocType, Search, Date, Integer, Keyword, Text, Ip, connections, InnerDoc, Nested
+from elasticsearch_dsl import DocType, Search, Date, Integer, Keyword, Text, Ip, connections, InnerDoc, Nested, Object
 
 
 
@@ -9,10 +9,9 @@ class DomainDetailsDoc(DocType):
     doc_created = Date()
     doc_updated = Date()
     processed = Integer()
-    type_of_doc = Text(analyzer='snowball')
 
     class Meta:
-        index = 'sfn-details'
+        index = 'sfn-domain-details'
 
     @classmethod
     def get_indexable(cls):
@@ -27,7 +26,6 @@ class DomainDetailsDoc(DocType):
             doc_created=obj.doc_created,
             doc_updated=obj.doc_updated,
             processed=obj.processed,
-            type_of_doc=obj.type_of_doc
         )
 
     def save(self, **kwargs):
@@ -40,6 +38,7 @@ class EventTag(InnerDoc):
     tag_class = Text(fields={'raw': Keyword()})
     confidence_level = Integer()
     sample_date = Date()
+    file_type = Text(fields={'raw': Keyword()})
 
 
 
@@ -49,7 +48,7 @@ class DNSEventDoc(DocType):
     host = Text(analyzer='snowball', fields={'raw': Keyword()})
     threat_id = Text(analyzer='snowball')
     threat_name = Text(analyzer='snowball')
-    event_tag = Nested(EventTag)
+    event_tag = Object(EventTag)
     created_at = Date()
     updated_at = Date()
     processed = Integer()
@@ -129,15 +128,13 @@ class AFDetailsDoc(DocType):
 
 class TagDetailsDoc(DocType):
     name = Text(analyzer='snowball', fields={'raw': Keyword()})
-    body = Text(analyzer='snowball')
     tag = Keyword()
     doc_created = Date()
     doc_updated = Date()
     processed = Integer()
-    type_of_doc = Text(analyzer='snowball')
 
     class Meta:
-        index = 'sfn-details'
+        index = 'sfn-tag-details'
 
     @classmethod
     def get_indexable(cls):
@@ -147,13 +144,11 @@ class TagDetailsDoc(DocType):
     def from_obj(cls, obj):
         return cls(
             id=obj.id,
-            body=obj.body,
             name=obj.name,
-            tag=obj.tags,
+            tag=obj.tag,
             doc_created=obj.doc_created,
             doc_updated=obj.doc_updated,
             processed=obj.processed,
-            type_of_doc=obj.type_of_doc
         )
 
     def save(self, **kwargs):
