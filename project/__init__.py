@@ -1,109 +1,138 @@
 # project/__init__.py
 
 import os
-import json
-import datetime
-import threading
-import atexit
 import logging
-import pprint
-from flask import Flask, jsonify
+from flask import Flask
 from flask_bootstrap import Bootstrap
-from elasticsearch import Elasticsearch
-from elasticsearch.exceptions import TransportError
+from flask_elasticsearch import Elasticsearch
 from logging.handlers import RotatingFileHandler
 
 
-    
-def create_app():
-    '''
-    - Configuration settings come from the main level config.py file
-        and are superseded by project/instance/config.py file.
-    - Create logging handler for application
-    - Sets up threading in background to take care of talking to external data
-        systems to add to documents in ElasticSearch
-    - Registers all blueprints within the app itself
-    - Finally, returns the SafeNetworking application.
-    '''
-
-    # Instantiate the app
-    app = Flask(__name__)
-    Bootstrap(app)
-    # Set config parameters
-    app.config.from_pyfile('config')
-    app.config.from_pyfile('instance/sfn.cfg')
-    
-    # Set up logging for the application - we may want to revisit this (see #10)
-   
-    handler = RotatingFileHandler('log/sfn.log', 
-                                   maxBytes=10000000, 
-                                   backupCount=10)
-    logFormat = logging.Formatter('[%(asctime)s][%(levelname)s][%(name)s] - %(message)s')
-    handler.setLevel(app.config["LOG_LEVEL"])
-    handler.setFormatter(logFormat)
-    app.logger.addHandler(handler)
-    app.logger.info("\n\n[INIT] SafeNetworking application initializing with log level of {0}\n".format(app.config["LOG_LEVEL"]))
+# Initialize the app for Flask
+app = Flask(__name__)
 
 
-    
+# Set the configuration parameters that are used by the application.  
+# These values are overriden by the .panrc file located in the base directory
+# for the application
+#
+# ---------- APPLICATION SETTINGS --------------
+#
+# Current version number of SafeNetworking
+app.config['VERSION'] = "0.1-dev"
+#
+# When set to True, this slows down the logging by only processing 1 event at a 
+# time and allows us to see what is going on if there are bugs
+app.config['DEBUG_MODE'] = False
+#
+# Flask setting for where session manager contains the info on the session(s)
+app.config['SESSION_TYPE'] = "filesystem"
+#
+# Secret key needed by session setting above.  
+app.config['SECRET_KEY'] = "\xfd{H\xe5<\x95\xf9\xe3\x96.5\xd1\x01O<!\xd5"
+#
+# Sets the base directory for the application
+app.config['BASE_DIR'] = os.path.abspath(os.path.dirname(__file__)) 
+#
+# Set the number of seconds for multi-threading to wait between processing calls 
+app.config['POOL_TIME'] = 10   
+#
+# Set the number of seconds - what the hell is this for?
+#app.config['SEC_PROCESS_POOL_TIME'] = 300
+#
+# When SafeNetworking is started, number of documents to read from the DB.  The
+# larger the number, the longer this will take to catch up.  
+app.config['DNS_EVENT_QUERY_SIZE'] = 1000
+app.config['IOT_EVENT_QUERY_SIZE'] = 1000
+# app.config['SEC_PROCESS_QUERY_SIZE'] = 1000 - what the hell is this for?
+#
+# SafeNetworking caches domain info from AutoFocus.  This setting specifies, in 
+# days, how long the cache is ok.  If there is cached info on this domain and it
+# is older than the setting, SFN will query AF and update as necessary and reset
+# the cache "last_updated" setting in ElasticSearch.
+app.config['DNS_DOMAIN_INFO_MAX_AGE'] = 30
+#
+# The Autofocus API isn't the speediest thing on the planet.  Usually, the most 
+# pertinent info is within the first couple of minutes of query time.  So, set
+# this to drop out of the processing loop and stop waiting for the query to 
+# finish - which could take 20mins.  No lie....   This is set in minutes
+app.config['AF_LOOKUP_TIMEOUT'] = 3
+#
+# The maximum percentage of the AF query we are willing to accept.  If, when we
+# check the timer above, the value is greater than this percentage, we bail out
+# of the loop.  The lower the number, the more likely that we may not get a 
+# result.  Though, usually, 1 minute and 50 percent is enough to get at least 
+# the latest result.
+app.config['AF_LOOKUP_MAX_PERCENTAGE'] = 50
+#
+# The maximum age for tag info.  This doesn't need to be updated as often as 
+# the domain or other items, but should be done periodically just in case.. 
+# Setting is in days.
+app.config['DOMAIN_TAG_INFO_MAX_AGE'] = 120
+#
+# Dictionary definition of confidence levels represented as max days and the 
+# level associated  - i.e. 3:80 would represent an 80% confidence level if the 
+# item is no more than 3 days old
+app.config['CONFIDENCE_LEVELS'] = "{'1':90,'3':80,'7':70,'10':60,'14':50}"
+#
+#
+# ------------------------------- LOGGING --------------------------------------
+#
+# Log level for Flask
+app.config['FLASK_LOGGING_LEVEL'] = "ERROR"
+# Log level for the SafeNetworking application itself.  All files are written
+# to log/sfn.log
+app.config['LOG_LEVEL'] = "WARNING"
+#
+# Size of Log file before rotating - in bytes
+app.config['LOG_SIZE'] = 10000000
+#
+# Number of log files to keep in log rotation
+app.config['LOG_BACKUPS'] = 10
+#
+#
+#
+# ----------------------------- ELASTICSTACK -----------------------------------
+#
+# By default our ElasticStack is installed all on the same system
+app.config['ELASTICSEARCH_HOST'] = "localhost"
+app.config['ELASTICSEARCH_PORT'] = "9200"
+app.config['ELASTICSEARCH_HTTP_AUTH'] = ""
+app.config['KIBANA_HOST'] = "localhost"
+app.config['KIBANA_PORT'] = "5601"
+app.config['ELASTICSTACK_VERSION'] = "6.1.1"
+#
+#
+#
+# ----------------------------- MISCELLANEOUS ----------------------------------
+#
+app.config['AUTOFOCUS_HOSTNAME'] = "autofocus.paloaltonetworks.com"
+app.config['AUTOFOCUS_SEARCH_URL'] = "https://autofocus.paloaltonetworks.com/api/v1.0/samples/search"
+app.config['AUTOFOCUS_RESULTS_URL'] = "https://autofocus.paloaltonetworks.com/api/v1.0/samples/results/"
+app.config['AUTOFOCUS_TAG_URL'] = "https://autofocus.paloaltonetworks.com/api/v1.0/tag/"
+#
+#
 
-    
-    # def startProcessing():
-    #     '''
-    #     Initializes the search list and sets the "processed" value to 17 so that
-    #     the app knows that the document has been picked up for processing. It
-    #     then calls the threading/multiprocessing function processDocuments() to
-    #     continually search through ElasticSearch DB for unprocessed docs.
-    #     '''
-    #     # Set up variables used for processing
-    #     docIds = {}
-    #     indexes = ("sfn-dns","sfn-iot")
-    #     qSize = app.config["INIT_QUERY_SIZE"]
+# Set instance config parameters
+app.config.from_pyfile('.panrc')
+# Add bootstrap object for Flask served pages
+bs = Bootstrap(app)
+# Add Elasticsearch object for our instance of ES 
+es = Elasticsearch(f"{app.config['ELASTICSEARCH_HOST']}:{app.config['ELASTICSEARCH_PORT']}")
 
-    #     try:
-    #         for index in indexes:
-    #             # Search for all docs that have processed set to 0, which means they 
-    #             # have not been processed yet.
-    #             docs = es.search(index=index,body={
-    #                                                 "size": qSize, 
-    #                                                 "query": {
-    #                                                     "match_all": {}
-    #                                                 },
-    #                                                 "sort": [
-    #                                                     {
-    #                                                     "msg_gen_time": {
-    #                                                         "order": "desc"
-    #                                                     }
-    #                                                     }
-    #                                                 ]
-    #                                             }
-    #             )
-    #             app.logger.info(
-    #                         "Found {0} unpropcessed document(s) for {1}"
-    #                                     .format(docs['hits']['total'],index))
+# Set up logging for the application - we may want to revisit this 
+# see issue #10 in repo
+handler = RotatingFileHandler('log/sfn.log', 
+                            maxBytes=app.config['LOG_SIZE'], 
+                            backupCount=app.config['LOG_BACKUPS'])
+logFormat = logging.Formatter('%(asctime)s - %(module)s:%(funcName)s[%(lineno)i] - %(thread)d - [%(levelname)s] -- %(message)s')
+handler.setLevel(app.config["LOG_LEVEL"])
+handler.setFormatter(logFormat)
+app.logger.addHandler(handler)
+app.logger.info(f"INIT - SafeNetworking application initializing with log level of {app.config['LOG_LEVEL']}")
+app.logger.info(f"ElasticSearch host is: {app.config['ELASTICSEARCH_HOST']}:{app.config['ELASTICSEARCH_PORT']}")
 
-    #             for doc in docs['hits']['hits']:
-    #                 docKey = doc['_id']
-    #                 print("{0}".format(docKey))
-    #                 docIds[docKey] = index
-                
-                
-    #     except TransportError:
-    #         app.logger.warning('Initialization was unable to find the index {0}'.format(index))
-        
-    #     return docIds
+# Register blueprints
+from project.views import sfn_blueprint
+app.register_blueprint(sfn_blueprint)
 
-    # # Initiate
-    # docIds = startProcessing()
-    # pprint.pformat(json.dumps(docIds))
-    # app.logger.debug("Found {0}".format(docIds))
-
-    # When we kill Flask (SIGTERM), we want to clear the trigger for the
-    # next thread
-    # atexit.register(interrupt)
-
-    # Register blueprints
-    from project.api.views import sfn_blueprint
-    app.register_blueprint(sfn_blueprint)
-
-    return app

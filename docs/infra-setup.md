@@ -42,11 +42,18 @@ sudo apt-get update && sudo apt-get install default-jdk
 </br>
 
 ## Install Elasticsearch, Logstash & Kibana
- ```
- sudo apt-get update && sudo apt-get install elasticsearch 
- sudo apt-get update && sudo apt-get install kibana 
- sudo apt-get update && sudo apt-get install logstash 
- ```
+```
+sudo apt-get update && sudo apt-get install elasticsearch 
+sudo apt-get update && sudo apt-get install kibana 
+sudo apt-get update && sudo apt-get install logstash 
+```
+
+## Set apt to hold the versions so it doesn't inadvertently update
+```
+sudo apt-mark hold elasticsearch
+sudo apt-mark hold kibana
+sudo apt-mark hold logstash
+```
 </br>
 </br>
 

@@ -9,20 +9,9 @@
 '''
 import time
 import requests
-import unittest
 import threading
-from project import create_app
-from project.api import utils
-from elasticsearch import Elasticsearch
-
-# Create the Flask application 
-app = create_app()
-
-# Set up the ElasticSearch object for our instance of ES and log it if in DEBUG
-es = Elasticsearch([{'host': app.config["ELASTICSEARCH_HOST"],
-                     'port': app.config["ELASTICSEARCH_PORT"]}])
-app.logger.debug("ElasticSearch host is: {0}"
-                    .format(app.config["ELASTICSEARCH_HOST"]))
+from project import app, es
+from project.dns.runner import processDNS
 
 
 # This decorator gets kicked off the first time a request is made to the 
@@ -30,20 +19,25 @@ app.logger.debug("ElasticSearch host is: {0}"
 # processing in the background as soon as the application is started. 
 @app.before_first_request
 def activate_job():
+    
     def runDNS():
         ''' 
-        Searches for any unprocessed sfn-dns documents, changes them to in process
+        Searches for any unprocessed sfn-dns documents, changes them to in proce
         and then sends a call to the dns handler to process them with AF, do 
         lookups, etc.
         '''
         while True:
-            utils.processDNS(es,app)
+            app.logger.debug("Processing new DNS events")
+            processDNS()
             time.sleep(app.config["POOL_TIME"])
-        
+    
     def runIoT():
-            while True:
-                print("Run IoT recurring task")
-                time.sleep(3)
+        ''' 
+        DOES NOTHING AS OF NOW - but will do this eventually:
+        Searches for any unprocessed sfn-iot documents and
+        then sends a call to the iot handler to process them.
+        '''
+        pass
 
     # Start the DNS processing routines
     threadDNS = threading.Thread(target=runDNS)
@@ -59,30 +53,28 @@ def initBackgroundProcs():
     the @app.before_first_request to start up the background processes for this
     application to have it's data gathered, maniplutated and stored properly. 
     '''
-        
+
     def initProcs():
         not_started = True
-        print('Initializing Background Processes')
         app.logger.info("Initializing Background Processes")
         
         while not_started:
             try:
                 r = requests.get('http://127.0.0.1:5000/')
                 if r.status_code == 200:
-                    print('SafeNetworking server started')
+                    #app.logger.info('\nSafeNetworking server started')
                     not_started = False
             except:
-                    print('Server not yet started')
+                    app.logger.info('\nServer not yet started')
                     time.sleep(2)     
         
     thread = threading.Thread(target=initProcs)
     thread.start()
 
 
-from project.api.views import *
+from project.views import *
 
 if __name__ == '__main__':
     initBackgroundProcs()
-    print('Background processes initialized')
     app.logger.info('Background processes initialized')
     app.run(host="0.0.0.0")
