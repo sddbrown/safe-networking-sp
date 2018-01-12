@@ -369,7 +369,7 @@ DELETE af-details
 
 
 # Delete any doc that has a current processed value of 17.
-# DON'T DO THIS WHILE SFN IS RUNNIG OR YOU WILL HOSE STUFF UP
+# DON'T DO THIS WHILE SFN IS RUNNING OR YOU WILL HOSE STUFF UP
 POST sfn-dns-event/_delete_by_query
 {
   "query": {
@@ -404,11 +404,15 @@ GET sfn-dns-event/_search
 
 # Get all docs that are not processed (processed = 0)
 # Sort by newest first
-# Jan 11 - 07:30 -  docs
-# Jan 11 - 08:00 -  docs
-# Jan 11 - 08:30 -  docs
-# Jan 11 - 09:00 -  docs  
-# Jan 11 - 09:30 -  docs  
+# Jan 11 - 07:40 -  65543 docs   (START) (Time to send 65544 events: 371.54682199999996)
+# Jan 11 - 08:00 -  65404 docs   139 from previous (7/minute)/139 from START
+# Jan 11 - 08:30 -  65054 docs   350 from previous (12/min)/489 from START
+# Jan 11 - 09:00 -  64272 docs   782 from previous (26/min)/1271 from START
+# Jan 11 - 09:30 -  63219 docs   1053 from previous(35/min)/2324 from START
+# Jan 11 - 10:00 -  62829 docs   390 from previous(13/min)/2714 from START
+# Jan 11 - 10:30 -  61839 docs   990 from previous(33/min)/3704 from START
+# Jan 11 - 11:00 -  60815 docs   1024 from previous(34/min)/4728 from START
+# Jan 11 - 11:30 -  59722 docs   1093 from previous(36/min)/ 5821 from START 
 GET sfn-dns-event/_search  
 {
   "query": {
@@ -438,11 +442,14 @@ GET sfn-dns-event/_search
 
 # Get all docs that are processed (processed = 1)
 # Sort by last updated first and limited to last 100
-# Jan 11 - 07:30 -  docs
-# Jan 11 - 08:00 -  docs
-# Jan 11 - 08:30 -  docs
-# Jan 11 - 09:00 -  docs  
-# Jan 11 - 09:30 -  docs  
+# Jan 11 - 08:00 -  83 docs
+# Jan 11 - 08:30 -  281 docs     198 from previous
+# Jan 11 - 09:00 -  734 docs     453 from previous
+# Jan 11 - 09:30 -  1195 docs    461 from previous
+# Jan 11 - 10:00 -  1411 docs    216 from previous
+# Jan 11 - 10:30 -  1838 docs    427 from previous
+# Jan 11 - 11:00 -  2286 docs    448 from previous
+# Jan 11 - 11:30 -  2814 docs    528 from previous
 GET sfn-dns-event/_search
 {
   "query": {
@@ -473,13 +480,16 @@ GET sfn-dns-event/_search
 
 
 
-# Get all docs that are not processed correctly (processed = 55)
+# Get all docs that are processed but there were no tags for the domain  (processed = 55)
 # Sort by newest first and limited to top 1000
-# Jan 11 - 07:30 -  docs
-# Jan 11 - 08:00 -  docs
-# Jan 11 - 08:30 -  docs
-# Jan 11 - 09:00 -  docs  
-# Jan 11 - 09:30 -  docs  
+# Jan 11 - 08:00 -  56 docs
+# Jan 11 - 08:30 -  208 docs     152 from previous
+# Jan 11 - 09:00 -  539 docs     331 from previous
+# Jan 11 - 09:30 -  1129 docs    590 from previous
+# Jan 11 - 10:00 -  1303 docs    174 from previous
+# Jan 11 - 10:30 -  1866 docs    563 from previous
+# Jan 11 - 11:00 -  2483 docs    617 from previous
+# Jan 11 - 11:30 -  3007 docs    524 from previous
 GET sfn-dns-event/_search
 {
   "query": {
@@ -508,6 +518,53 @@ GET sfn-dns-event/_search
   ]
 }
 
+
+# Get the number of unique domain names in the events - i.e. how many domain
+# docs should we eventually have if the events stop at this current time.
+GET sfn-dns-event/_search
+{
+    "aggs" : {
+        "number-of-unique-domains" : {
+            "cardinality" : {
+                "field" : "domain_name.keyword"
+            }
+        }
+    },
+    "size":0
+}
+
+
+# Get number of representative details docs.  This shows how many events per domain
+GET sfn-dns-event/_search
+{
+    "aggs" : {
+        "domain-details" : {
+            "terms" : { 
+              "field" : "domain_name.keyword", 
+              "size":10000
+            }
+        }
+    },
+    "size" : 0
+}
+
+# Get number of representative details docs.  This shows how many events per domains
+# return with nothing in the time/completion-percentage alloted (processed = 55)
+GET sfn-dns-event/_search
+{
+    "aggs" : {
+        "domain-details" : {
+            "terms" : { 
+              "field" : "domain_name.keyword", 
+              "size":10000
+            }
+        }
+    },
+    "size" : 0,
+    "query": {
+      "match": {"processed":55}
+    }
+}
 
 # Get event doc by _id
 GET sfn-dns-event/_search
@@ -557,6 +614,11 @@ GET sfn-domain-details/_search
 
 
 # Get all docs (ordered by newest first and limited to 1000)
+# Jan 11 - 07:40 -  0 docs   (START)
+# Jan 11 - 08:40 -  79 docs   
+# Jan 11 - 09:40 -  207 docs
+# Jan 11 - 10:40 -  312 docs
+# Jan 11 - 11:40 -  371 docs
 GET sfn-domain-details/_search
 {
   "query": {

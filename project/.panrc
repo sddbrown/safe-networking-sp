@@ -14,9 +14,8 @@
 # logging and allows us to see what is going on if there are bugs
 # DEBUG_MODE = True
 
-# Set the number of seconds for multi-threading to wait between processing calls
-# of any events deemed as "primary" 
-# POOL_TIME = 60   
+# Set the number of seconds for multi-threading to wait between processing calls 
+POOL_TIME = 0
 
 # When SafeNetworking is started, number of documents to read from the DB.  The
 # larger the number, the longer this will take to catch up.  
@@ -33,14 +32,14 @@ DNS_EVENT_QUERY_SIZE = 50
 # pertinent info is within the first couple of minutes of query time.  So, set
 # this to drop out of the processing loop and stop waiting for the query to 
 # finish - which could take 20mins.  No lie....   This is set in minutes
-AF_LOOKUP_TIMEOUT = 3
+AF_LOOKUP_TIMEOUT = 1
 #
 # The maximum percentage of the AF query we are willing to accept.  If, when we
 # check the timer above, the value is greater than this percentage, we bail out
 # of the loop.  The lower the number, the more likely that we may not get a 
 # result.  Though, usually, 1 minute and 50 percent is enough to get at least 
 # the latest result.
-# AF_LOOKUP_MAX_PERCENTAGE = 10
+AF_LOOKUP_MAX_PERCENTAGE = 10
 #
 # The maximum age for tag info.  This doesn't need to be updated as often as 
 # the domain or other items, but should be done periodically just in case.. 
@@ -58,11 +57,11 @@ CONFIDENCE_LEVELS = "{'15':90,'25':80,'40':70,'50':60,'60':50}"
 ################################################################################
 # Set debug level for Flask - if 'DEBUG = True' all debug messages will appear
 # on console where SafeNetworking application was started
-DEBUG = True
+DEBUG = False
 #
 # Set the logging level for the SafeNetworking application.  All messages will
 # be sent to log/sfn.log
-LOG_LEVEL = "DEBUG"
+LOG_LEVEL = "ERROR"
 #
 # Size of Log file before rotating - in bytes
 # LOG_SIZE = 10000000

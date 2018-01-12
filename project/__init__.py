@@ -34,9 +34,8 @@ app.config['SECRET_KEY'] = "\xfd{H\xe5<\x95\xf9\xe3\x96.5\xd1\x01O<!\xd5"
 # Sets the base directory for the application
 app.config['BASE_DIR'] = os.path.abspath(os.path.dirname(__file__)) 
 #
-# Set the number of seconds for multi-threading to wait between processing calls
-# of any events deemed as "primary" 
-app.config['POOL_TIME'] = 60   
+# Set the number of seconds for multi-threading to wait between processing calls 
+app.config['POOL_TIME'] = 10   
 #
 # Set the number of seconds - what the hell is this for?
 #app.config['SEC_PROCESS_POOL_TIME'] = 300

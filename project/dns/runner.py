@@ -24,7 +24,7 @@ def processDNS():
     '''
     now = datetime.datetime.now()
     priDocIds = dict()
-    genDocIds = dict()
+    secDocIds = dict()
     qSize = app.config["DNS_EVENT_QUERY_SIZE"]
     timeLimit = (now - datetime.timedelta(days=app.config['DNS_DOMAIN_INFO_MAX_AGE']))
     updateDetails = False
@@ -46,20 +46,31 @@ def processDNS():
     # Execute the search
     searchResponse =  eventSearch.execute()
    
-    # For each hit, classify the event as either generic or primary and 
-    # add the event ID to the appropriate dictionary as the key and the domain
+    # For each hit, classify the event as either primary (we have the domain
+    # info cached) or secondary (need to look it up) and add the event ID to the
+    # appropriate dictionary as the key and the domain
     # name as the value associated with it
     for hit in searchResponse.hits:
-        if hit.threat_name == "generic":
-            genDocIds[hit.meta.id] = hit.domain_name
-            app.logger.debug(f"{hit.meta.id} : {genDocIds[hit.meta.id]} - " +
-                             f"{hit.threat_name}")
-        else:
+
+        # Check to see if we have a domain doc for it already.  If we do, 
+        # add it to be processed first, if not, add it to the AF lookup
+        # queue (secDocIds)
+        domainSearch = Search(index="sfn-domain-details") \
+                        .query("match", name=hit.domain_name)
+        if domainSearch.execute():
             priDocIds[hit.meta.id] = hit.domain_name
             app.logger.debug(f"{hit.meta.id} : {priDocIds[hit.meta.id]} - " +
                              f"{hit.threat_name}")
 
+        else:
+            secDocIds[hit.meta.id] = hit.domain_name
+            app.logger.debug(f"{hit.meta.id} : {secDocIds[hit.meta.id]} - " +
+                             f"{hit.threat_name}")
+        
+            
     app.logger.debug(f"priDocIds are {priDocIds}")
+    app.logger.debug(f"secDocIds are {secDocIds}")
+
 
     # If we aren't in DEBUG mode (.panrc setting)
     if not app.config['DEBUG_MODE']:
@@ -78,9 +89,9 @@ def processDNS():
         
         # Do the same with the generic/secondary keys and pace so we don't kill AF
         with Pool(cpu_count() * 4) as pool:
-            results = pool.map(searchDomain, genDocIds)
+            results = pool.map(searchDomain, secDocIds)
         
-        app.logger.debug(f"Results for processing generic events {results}")
+        app.logger.debug(f"Results for processing AF lookup events {results}")
 
     # This else gets triggered so we only do one document at a time and is for 
     # debugging at a pace that doesn't overload the logs. Load the secondary
@@ -92,7 +103,7 @@ def processDNS():
             except Exception as e:
                 app.logger.error(f"Exception recieved processing document " +
                                  f"{document}: {e}")
-        for document in genDocIds:
+        for document in secDocIds:
             try:
                 searchDomain(document)
             except Exception as e:
@@ -114,7 +125,7 @@ def searchDomain(eventID):
 
     try:
         eventDoc = DNSEventDoc.get(id=eventID)
-        time.sleep(1)    
+        #time.sleep(1)    
         domainName = eventDoc.domain_name
         domainDoc = getDomainDoc(domainName)
 

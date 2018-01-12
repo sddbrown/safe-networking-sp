@@ -192,18 +192,10 @@ def assessTags(tagsObj):
     #    Set the tagInfo to this but keep going in case we find a campaign 
     #      or an actor 
 
-    # import pdb
-    # pdb.set_trace()
 
-    # print(tagsObj)
-
-    # print(f"len of tagsObj is {len(tagsObj)}")
     for entry in tagsObj:
-        # print(f"entry is {entry}")
         while not taggedEvent:
             sampleDate = entry[0]
-            # print("\n\n\n")
-            # print(f"sample date is {sampleDate}")
             sampleFileType = entry[1]
             for tag in entry[2]:
                 tagName = tag[1]
