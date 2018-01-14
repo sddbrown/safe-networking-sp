@@ -17,6 +17,11 @@ export default [
   },
   {
     name: "domain",
-    path: "/domain"
-  }
+    path: "/domain",
+  
+  children: [
+    { name: "dashboard", path: "/dashboard" },
+    { name: "child-route", path: "/child-route" }
+  ]
+}
 ];

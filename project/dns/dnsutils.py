@@ -335,7 +335,7 @@ def getDomainInfo(threatDomain):
         app.logger.error(f"Unable to retrieve domain info from AutoFocus. " +
                          f"The AF query returned {queryData}")
 
-    #domainTags = list()
+    
     domainObj = list()
 
     if domainData['total'] !=0:
