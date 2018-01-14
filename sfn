@@ -29,7 +29,7 @@ def activate_job():
         while True:
             app.logger.debug("Processing new DNS events")
             processDNS()
-            time.sleep(app.config["POOL_TIME"])
+            #time.sleep(app.config["POOL_TIME"])
     
     def runIoT():
         ''' 

@@ -125,9 +125,9 @@ def searchDomain(eventID):
 
     try:
         eventDoc = DNSEventDoc.get(id=eventID)
-        #time.sleep(1)    
         domainName = eventDoc.domain_name
         domainDoc = getDomainDoc(domainName)
+
 
         if "NULL" in domainDoc:
             app.logger.warning(f"Unable to process event {eventID} beacause" +
@@ -137,9 +137,9 @@ def searchDomain(eventID):
 
             #  Set dummy info if no tags were found
             if "2000-01-01T00:00:00" in str(domainDoc.tags):
-                eventTag = {'tag_name': 'NA', 
-                            'public_tag_name': 'NA',
-                            'tag_class': 'malicious_behavior',
+                eventTag = {'tag_name': 'No tags found for domain', 
+                            'public_tag_name': 'No tags found for domain',
+                            'tag_class': 'No tags found for domain',
                             'sample_date': '2000-01-01T00:00:00',
                             'file_type': 'NA',
                             'confidence_level': 0}
