@@ -61,7 +61,7 @@ DEBUG = False
 #
 # Set the logging level for the SafeNetworking application.  All messages will
 # be sent to log/sfn.log
-LOG_LEVEL = "INFO"
+LOG_LEVEL = "DEBUG"
 #
 # Size of Log file before rotating - in bytes
 # LOG_SIZE = 10000000
