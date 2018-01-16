@@ -26,7 +26,7 @@ DNS_EVENT_QUERY_SIZE = 1000
 # days, how long the cache is ok.  If there is cached info on this domain and it
 # is older than the setting, SFN will query AF and update as necessary and reset
 # the cache "last_updated" setting in ElasticSearch.
-# DNS_DOMAIN_INFO_MAX_AGE = 30
+DNS_DOMAIN_INFO_MAX_AGE = 1
 
 # The Autofocus API isn't the speediest thing on the planet.  Usually, the most 
 # pertinent info is within the first couple of minutes of query time.  So, set
@@ -39,7 +39,7 @@ AF_LOOKUP_TIMEOUT = 3
 # of the loop.  The lower the number, the more likely that we may not get a 
 # result.  Though, usually, 1 minute and 50 percent is enough to get at least 
 # the latest result.
-AF_LOOKUP_MAX_PERCENTAGE = 20
+AF_LOOKUP_MAX_PERCENTAGE = 25
 #
 # The maximum age for tag info.  This doesn't need to be updated as often as 
 # the domain or other items, but should be done periodically just in case.. 
