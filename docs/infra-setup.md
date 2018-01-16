@@ -6,7 +6,6 @@
 
 #### Install supporting tools and pkgs for Ubuntu
 ```
-sudo apt-get install supervisor
 sudo apt-get install apt-transport-https
 sudo apt-get install sysv-rc-conf
 ```
@@ -21,22 +20,6 @@ wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch |sudo apt-key add 
 echo "deb https://artifacts.elastic.co/packages/6.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-6.x.list
 ```
 </br>
-
-
-## Supervisor
-
-Supervisor(d) is used to start/stop/restart and view status of the SafeNetworking and user interface applications.
-It must be configured to know where the application is and where to redirect stdout/stderr messages for logging. 
-
-
-#### Edit the /etc/supervisor/supervisord.conf file 
-###### NOTE: Change the directory for your install below to the installation directory you choose
-
-```
-childlogdir=/home/pan/safe-networking-sp/log/console           ;
-stdout_logfile_maxbytes=10000000;
-stdout_logfile_backups=6
-```
 
 
 
