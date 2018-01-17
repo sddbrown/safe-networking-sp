@@ -147,12 +147,23 @@ sudo /bin/systemctl start kibana.service
 ```python
 LS_USER=root
 ```
+
+#### Create a symbolic link for the configuration for logstash (becasue, apparently, it is stupid)
+```
+sudo ln -s /etc/logstash /usr/share/logstash/config
+```
 </br>
 
+
 #### Configure Logstash to start with the system
-     sudo /bin/systemctl daemon-reload
-     sudo /bin/systemctl enable logstash.service
+```
+sudo /bin/systemctl daemon-reload
+```
+```
+sudo /bin/systemctl enable logstash.service
+```
 
 #### Start Logstash
-     sudo /bin/systemctl start logstash.service
-
+```
+sudo /bin/systemctl start logstash.service
+```
