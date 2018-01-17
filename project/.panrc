@@ -39,7 +39,7 @@ AF_LOOKUP_TIMEOUT = 3
 # of the loop.  The lower the number, the more likely that we may not get a 
 # result.  Though, usually, 1 minute and 50 percent is enough to get at least 
 # the latest result.
-AF_LOOKUP_MAX_PERCENTAGE = 25
+AF_LOOKUP_MAX_PERCENTAGE = 20
 #
 # The maximum age for tag info.  This doesn't need to be updated as often as 
 # the domain or other items, but should be done periodically just in case.. 
@@ -57,7 +57,7 @@ CONFIDENCE_LEVELS = "{'15':90,'25':80,'40':70,'50':60,'60':50}"
 ################################################################################
 # Set debug level for Flask - if 'DEBUG = True' all debug messages will appear
 # on console where SafeNetworking application was started
-DEBUG = False
+DEBUG = True
 #
 # Set the logging level for the SafeNetworking application.  All messages will
 # be sent to log/sfn.log

@@ -13,7 +13,7 @@
 ###### 2. Change into repo directory
 ```$ cd safe-networking-sp```
 
-###### 3. Create python 3.6 virtualenv ([install python 3.6](https://askubuntu.com/questions/865554/how-do-i-install-python-3-6-using-apt-get) if you do not have it)
+###### 3. Create python 3.6 virtualenv
 ```$ python3.6 -m venv env```
 
 ###### 4. Active virtualenv
