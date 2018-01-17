@@ -6,10 +6,10 @@
 
 #### Install supporting tools and pkgs for Ubuntu
 ```
-sudo apt-get install apt-transport-https
-sudo apt-get install sysv-rc-conf
+sudo apt-get install software-properties-common python-software-properties
+sudo add-apt-repository ppa:git-core/ppa
+sudo apt-get update && sudo apt-get install apt-transport-https sysv-rc-conf curl git
 ```
-
 
 #### Get the release key for the ElasticStack software
 ```
@@ -21,6 +21,18 @@ wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch |sudo apt-key add 
 echo "deb https://artifacts.elastic.co/packages/6.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-6.x.list
 ```
 </br>
+
+
+## Python 3.6
+SafeNetworking requires Python 3.6 to run properly.  
+```
+sudo add-apt-repository ppa:jonathonf/python-3.6
+sudo apt-get update && sudo apt-get install python3.6
+```
+SafeNetworking also requires the use of virtualenvs to run properly.
+```
+sudo apt-get install python3.6-venv
+```
 
 ## JAVA 8
 The ElasticStack depends on Java to run, so we need to make sure that we have the Java 8 JDK installed before we install the stack.
@@ -42,11 +54,18 @@ sudo apt-get update && sudo apt-get install default-jdk
 </br>
 
 ## Install Elasticsearch, Logstash & Kibana
- ```
- sudo apt-get update && sudo apt-get install elasticsearch 
- sudo apt-get update && sudo apt-get install kibana 
- sudo apt-get update && sudo apt-get install logstash 
- ```
+```
+sudo apt-get update && sudo apt-get install elasticsearch 
+sudo apt-get update && sudo apt-get install kibana 
+sudo apt-get update && sudo apt-get install logstash 
+```
+
+## Set apt to hold the versions so it doesn't inadvertently update
+```
+sudo apt-mark hold elasticsearch
+sudo apt-mark hold kibana
+sudo apt-mark hold logstash
+```
 </br>
 </br>
 
@@ -54,7 +73,7 @@ sudo apt-get update && sudo apt-get install default-jdk
 
 # ELASTICSEARCH CONFIGURATION AND STARTUP
 
-#### Edit the network.host setting (it is commented out) elasticsearch config file /etc/elasticsearch/elasticsearch.yml </br>
+#### Edit the network.host setting (it is commented out) elasticsearch config file as root - sudo /etc/elasticsearch/elasticsearch.yml </br>
 ```json
 network.host: 0.0.0.0
 ```
@@ -97,7 +116,7 @@ curl 127.0.0.1:9200
 
 
 # KIBANA CONFIGURATION AND STARTUP
-#### Edit the elasticsearch.url setting (it is commented out) in the kibana config file /etc/kibana/kibana.yml 
+#### Edit the elasticsearch.url setting (it is commented out) in the kibana config file as root - sudo /etc/kibana/kibana.yml 
 ```python
 elasticsearch.url:"http://localhost:9200"
 ```

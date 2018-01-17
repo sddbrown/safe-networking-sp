@@ -86,6 +86,7 @@ celerybeat-schedule
 .venv
 venv/
 ENV/
+env/
 
 # Spyder project settings
 .spyderproject
@@ -109,3 +110,7 @@ instance/config
 
 # Node + npm Stuff
 node_modules/
+
+# Logfiles
+log/*
+!log/.gitkeep

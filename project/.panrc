@@ -1,0 +1,91 @@
+#
+# 
+# This file is used for all personalized/instance settings within the 
+# application.  Only set what you need and accept the defaults for the rest.
+# Consult the documentation and/or your account team for more 
+# information on the settings in this file.  
+#
+
+################################################################################
+#                           APPLICATION SPECIFIC
+################################################################################
+#
+# Set this to true to only process 1 event at a time.  This slows down the 
+# logging and allows us to see what is going on if there are bugs
+DEBUG_MODE = False
+
+# Set the number of seconds for multi-threading to wait between processing calls 
+POOL_TIME = 0
+
+# When SafeNetworking is started, number of documents to read from the DB.  The
+# larger the number, the longer this will take to catch up.  
+DNS_EVENT_QUERY_SIZE = 1000
+#IOT_EVENT_QUERY_SIZE = 1000
+
+# SafeNetworking caches domain info from AutoFocus.  This setting specifies, in 
+# days, how long the cache is ok.  If there is cached info on this domain and it
+# is older than the setting, SFN will query AF and update as necessary and reset
+# the cache "last_updated" setting in ElasticSearch.
+DNS_DOMAIN_INFO_MAX_AGE = 1
+
+# The Autofocus API isn't the speediest thing on the planet.  Usually, the most 
+# pertinent info is within the first couple of minutes of query time.  So, set
+# this to drop out of the processing loop and stop waiting for the query to 
+# finish - which could take 20mins.  No lie....   This is set in minutes
+AF_LOOKUP_TIMEOUT = 3
+#
+# The maximum percentage of the AF query we are willing to accept.  If, when we
+# check the timer above, the value is greater than this percentage, we bail out
+# of the loop.  The lower the number, the more likely that we may not get a 
+# result.  Though, usually, 1 minute and 50 percent is enough to get at least 
+# the latest result.
+AF_LOOKUP_MAX_PERCENTAGE = 20
+#
+# The maximum age for tag info.  This doesn't need to be updated as often as 
+# the domain or other items, but should be done periodically just in case.. 
+# Setting is in days.
+# DOMAIN_TAG_INFO_MAX_AGE = 120
+#
+# Dictionary definition of confidence levels represented as max days and the 
+# level associated  - i.e. 3:80 would represent an 80% confidence level if the 
+# item is no more than 3 days old
+CONFIDENCE_LEVELS = "{'15':90,'25':80,'40':70,'50':60,'60':50}"
+
+
+################################################################################
+#                                LOGGING
+################################################################################
+# Set debug level for Flask - if 'DEBUG = True' all debug messages will appear
+# on console where SafeNetworking application was started
+DEBUG = True
+#
+# Set the logging level for the SafeNetworking application.  All messages will
+# be sent to log/sfn.log
+LOG_LEVEL = "DEBUG"
+#
+# Size of Log file before rotating - in bytes
+# LOG_SIZE = 10000000
+#
+# Number of log files to keep in log rotation
+# LOG_BACKUPS = 10
+
+
+################################################################################
+#                              ELASTICSTACK
+################################################################################
+# The settings for this instance are bound to one, external interface on the
+# system.  Thus changing the default settings to use that IP
+ELASTICSEARCH_HOST = "192.168.86.140"
+ELASTICSEARCH_PORT = "9200"
+ELASTICSEARCH_HTTP_AUTH = ""
+KIBANA_HOST = "192.168.86.140"
+KIBANA_PORT="5601"
+
+
+
+################################################################################
+#                                 API Keys
+################################################################################
+# API Key for Autofocus.  Allows SafeNetworking to query AF via the API 
+# without having to have credentials stored somewhere.
+AUTOFOCUS_API_KEY = "daa45e07-6635-44f7-9ee0-61fd7c453878"

@@ -6,7 +6,12 @@
 #
 
 ################################################################################
-# APPLICATION SETTINGS
+#                           APPLICATION SPECIFIC
+################################################################################
+#
+
+################################################################################
+#                                LOGGING
 ################################################################################
 # Set debug level for Flask - if 'DEBUG = True' all debug messages will appear
 # on console where SafeNetworking application was started
@@ -15,8 +20,9 @@ DEBUG = True
 # be sent to log/sfn.log
 LOG_LEVEL = "DEBUG"
 
+
 ################################################################################
-# ELASTICSTACK SETTINGS
+#                              ELASTICSTACK
 ################################################################################
 # The settings for this instance are bound to one, external interface on the
 # system.  Thus changing the default settings to use that IP
@@ -26,11 +32,11 @@ ELASTICSEARCH_HTTP_AUTH = ""
 KIBANA_HOST = "192.168.86.140"
 KIBANA_PORT="5601"
 
+
+
 ################################################################################
-# API Keys
+#                                 API Keys
 ################################################################################
 # API Key for Autofocus.  Allows SafeNetworking to query AF via the API 
 # without having to have credentials stored somewhere.
-AUTOFOCUS_API_KEY = "c274ae6d-9754-4c3c-abe3-3acf60a9b953"
-
-
+AUTOFOCUS_API_KEY = "daa45e07-6635-44f7-9ee0-61fd7c453878"

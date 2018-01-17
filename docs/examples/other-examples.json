@@ -1,0 +1,867 @@
+# ElasticSearch stats and counters
+GET /sfn-dns-event/_stats/
+
+########################################################
+###              CREATE MAPPINGS
+########################################################
+PUT af-details
+{
+  "mappings": {
+    "doc": {
+      "dynamic": true,
+      "properties": {
+        "@version": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "bucket_info": {
+          "dynamic": true,
+          "properties": {
+            "minute_points": {
+              "type": "integer"
+            },
+            "daily_points": {
+              "type": "integer"
+            },
+            "minute_points_remaining": {
+              "type": "integer"
+            },
+            "daily_points_remaining": {
+              "type": "integer"
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+PUT sfn-domain-details
+{
+  "mappings": {
+    "doc": {
+      "dynamic": true,
+      "properties": {
+        "@timestamp": {
+          "type": "date"
+        },
+        "@version": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "name": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "tags": {
+          "type": "text"
+        },
+        "processed": {
+          "type": "byte",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        }
+      }
+    }
+  }
+}
+PUT sfn-tag-details
+{
+  "mappings": {
+    "doc": {
+      "dynamic": true,
+      "properties": {
+        "@timestamp": {
+          "type": "date"
+        },
+        "@version": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "name": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "tag": {
+          "dynamic": true,
+          "type": "nested",
+          "properties": {
+            "public_tag_name": {
+              "type": "keyword"
+            },
+            "tag_name": {
+              "type": "keyword"
+            },
+            "tag_class": {
+              "type": "keyword"
+            },
+            "updated_at": {
+              "type": "date",
+              "format": "yyyy-MM-dd'T'HH:mm:ss'Z'||yyyy-MM-dd HH:mm:ss"
+            }
+          }
+        },
+        "tag_groups": {
+          "dynamic": true,
+          "type": "nested",
+          "properties": {
+            "tag_group_name": {
+              "type": "keyword"
+            },
+            "description": {
+              "type": "text"
+            }
+          }
+        },
+        "processed": {
+          "type": "byte",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+PUT sfn-dns-event
+{
+  "mappings": {
+    "doc": {
+      "dynamic": true,
+      "properties": {
+        "@timestamp": {
+          "type": "date"
+        },
+        "@version": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "device_name": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 128
+            }
+          }
+        },
+        "domain_name": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "dst_ip": {
+          "type": "ip",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "host": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "updated_at": {
+          "type": "date"
+        },
+        "sig_num": {
+          "type": "integer",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "processed": {
+          "type": "byte",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "received_at": {
+          "type": "date"
+        },
+        "rule": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "src_ip": {
+          "type": "ip",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "geoip": {
+          "dynamic": true,
+          "properties": {
+            "ip": {
+              "type": "ip"
+            },
+            "location": {
+              "type": "geo_point"
+            },
+            "latitude": {
+              "type": "half_float"
+            },
+            "longitude": {
+              "type": "half_float"
+            }
+          }
+        },
+        "event_tag": {
+          "dynamic": true,
+          "properties": {
+            "tag_name": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 128
+                }
+              }
+            },
+            "public_tag_name": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 128
+                }
+              }
+            },
+            "tag_class": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 128
+                }
+              }
+            },
+            "file_type": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 128
+                }
+              }
+            },
+            "confidence_level": {
+              "type": "integer",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "sample_date": {
+              "type": "date"
+            }
+          }
+        },
+        "threat_category": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "threat_id": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        },
+        "threat_name": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+########################################################
+###             END CREATE MAPPINGS
+########################################################
+
+########################################################
+###               DELETE STUFF
+########################################################
+DELETE sfn-dns-event
+DELETE sfn-dns-unknown
+DELETE sfn-domain-details
+DELETE sfn-tag-details
+DELETE af-details
+
+
+# Delete any doc that has a current processed value of 17.
+# DON'T DO THIS WHILE SFN IS RUNNING OR YOU WILL HOSE STUFF UP
+POST sfn-dns-event/_delete_by_query
+{
+  "query": {
+    "match": {"processed": 17}
+  }
+}
+
+
+POST sfn-domain-details/_delete_by_query
+{
+  "query": {
+    "match": {"name": "mytest.net"}
+  }
+}
+
+
+########################################################
+###             END DELETE STUFF
+########################################################
+
+
+########################################################
+###                SFN-DNS-EVENT
+########################################################
+# Get mappings
+GET sfn-dns-event
+
+
+# Get all docs (random order)
+GET sfn-dns-event/_search
+
+
+# Get all docs that are not processed (processed = 0)
+# Sort by newest first
+# Jan 11 - 07:40 -  65543 docs   (START) (Time to send 65544 events: 371.54682199999996)
+# Jan 11 - 08:00 -  65404 docs   139 from previous (7/minute)/139 from START
+# Jan 11 - 08:30 -  65054 docs   350 from previous (12/min)/489 from START
+# Jan 11 - 09:00 -  64272 docs   782 from previous (26/min)/1271 from START
+# Jan 11 - 09:30 -  63219 docs   1053 from previous(35/min)/2324 from START
+# Jan 11 - 10:00 -  62829 docs   390 from previous(13/min)/2714 from START
+# Jan 11 - 10:30 -  61839 docs   990 from previous(33/min)/3704 from START
+# Jan 11 - 11:00 -  60815 docs   1024 from previous(34/min)/4728 from START
+# Jan 11 - 11:30 -  59722 docs   1093 from previous(36/min)/ 5821 from START 
+GET sfn-dns-event/_search  
+{
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "match": {
+            "threat_category": "dns-wildfire"
+          }
+        },
+        {
+          "match": {
+            "processed": "0"
+          }
+        }
+      ]
+    }
+  },
+  "sort": [
+    {
+      "@timestamp": {
+        "order": "desc"
+      }
+    }
+  ]
+}
+
+# Get all docs that are processed (processed = 1)
+# Sort by last updated first and limited to last 100
+# Jan 11 - 08:00 -  83 docs
+# Jan 11 - 08:30 -  281 docs     198 from previous
+# Jan 11 - 09:00 -  734 docs     453 from previous
+# Jan 11 - 09:30 -  1195 docs    461 from previous
+# Jan 11 - 10:00 -  1411 docs    216 from previous
+# Jan 11 - 10:30 -  1838 docs    427 from previous
+# Jan 11 - 11:00 -  2286 docs    448 from previous
+# Jan 11 - 11:30 -  2814 docs    528 from previous
+GET sfn-dns-event/_search
+{
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "match": {
+            "threat_category": "dns-wildfire"
+          }
+        },
+        {
+          "match": {
+            "processed": "1"
+          }
+        }
+      ]
+    }
+  },
+  "size": 100,
+  "sort": [
+    {
+      "updated_at": {
+        "order": "desc"
+      }
+    }
+  ]
+}
+
+
+
+# Get all docs that are processed but there were no tags for the domain  (processed = 55)
+# Sort by newest first and limited to top 1000
+# Jan 11 - 08:00 -  56 docs
+# Jan 11 - 08:30 -  208 docs     152 from previous
+# Jan 11 - 09:00 -  539 docs     331 from previous
+# Jan 11 - 09:30 -  1129 docs    590 from previous
+# Jan 11 - 10:00 -  1303 docs    174 from previous
+# Jan 11 - 10:30 -  1866 docs    563 from previous
+# Jan 11 - 11:00 -  2483 docs    617 from previous
+# Jan 11 - 11:30 -  3007 docs    524 from previous
+GET sfn-dns-event/_search
+{
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "match": {
+            "threat_category": "dns-wildfire"
+          }
+        },
+        {
+          "match": {
+            "processed": "55"
+          }
+        }
+      ]
+    }
+  },
+  "size": 1000,
+  "sort": [
+    {
+      "updated_at": {
+        "order": "desc"
+      }
+    }
+  ]
+}
+
+
+# Get the number of unique domain names in the events - i.e. how many domain
+# docs should we eventually have if the events stop at this current time.
+GET sfn-dns-event/_search
+{
+    "aggs" : {
+        "number-of-unique-domains" : {
+            "cardinality" : {
+                "field" : "domain_name.keyword"
+            }
+        }
+    },
+    "size":0
+}
+
+
+# Get number of representative details docs.  This shows how many events per domain
+GET sfn-dns-event/_search
+{
+    "aggs" : {
+        "domain-details" : {
+            "terms" : { 
+              "field" : "domain_name.keyword", 
+              "size":10000
+            }
+        }
+    },
+    "size" : 0
+}
+
+# Get number of representative details docs.  This shows how many events per domains
+# return with nothing in the time/completion-percentage alloted (processed = 55)
+GET sfn-dns-event/_search
+{
+    "aggs" : {
+        "domain-details" : {
+            "terms" : { 
+              "field" : "domain_name.keyword", 
+              "size":10000
+            }
+        }
+    },
+    "size" : 0,
+    "query": {
+      "match": {"processed":55}
+    }
+}
+
+# Get event doc by _id
+GET sfn-dns-event/_search
+{
+"query": {
+    "terms": {
+      "_id": [ "Dh9V3WABApV8EYR8CMn-"] 
+    }
+  }
+}
+
+
+# Get event doc by threat_name field
+GET sfn-dns-event/_search
+{
+"query": {
+    "match": { "threat_name":"Bogus.data"}
+  }
+}
+
+# Change all of the "stuck" event docs back to processed of 0 so they get 
+# picked up again
+POST sfn-dns-event/_update_by_query
+{
+  "script": {
+    "source": "ctx._source.processed = 0",
+    "lang": "painless"
+  },
+  "query": {
+    "term": {
+      "processed": 55
+    }
+  }
+}
+########################################################
+###          END SFN-DNS-EVENT 
+########################################################
+
+
+########################################################
+###          SFN-DOMAIN-DETAILS
+########################################################
+# Get mappings
+GET sfn-domain-details
+# Get all docs (random order and limited to top 10)
+GET sfn-domain-details/_search
+
+
+# Get all docs (ordered by newest first and limited to 1000)
+# Jan 11 - 07:40 -  0 docs   (START)
+# Jan 11 - 08:40 -  79 docs   
+# Jan 11 - 09:40 -  207 docs
+# Jan 11 - 10:40 -  312 docs
+# Jan 11 - 11:40 -  371 docs
+GET sfn-domain-details/_search
+{
+  "query": {
+    "match_all":{}
+  },
+  "size": 1000,
+  "sort": [
+    {
+      "doc_updated": {
+        "order": "desc"
+      }
+    }
+  ]
+}
+
+
+
+# Get docs where sample_tags[tag_class] is "malware_family"
+# Returns any doc with that in it
+GET sfn-domain-details/_search
+{
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "match": {
+            "tags.tag_class": "malware_family"
+          }
+        }
+      ]
+    }
+  }
+}
+  
+
+# Get number of representative details docs.  If any of these
+# are more than 1, we have created too many and needs to be dealt with
+GET sfn-domain-details/_search
+{
+    "aggs" : {
+        "domain-details" : {
+            "terms" : { 
+              "field" : "name.keyword", 
+              "size":10000
+            }
+        }
+    },
+    "size" : 0
+}
+
+
+
+# Get details doc where name matches entry
+GET sfn-details/_search
+{
+  "query": {
+    "bool": {
+       "must": [{"match": {"name": "orrent-port5478.ddns.net"}}]
+    }
+  }
+}
+
+
+
+# Example push of info to a new domain-doc
+POST sfn-domain-details/doc/mytest.net
+{
+  "name": "mytest.net",
+  "doc_updated": "2017-12-15 22:02:47",
+  "processed": 0
+}
+
+########################################################
+###        END SFN-DOMAIN-DETAILS
+########################################################
+
+########################################################
+###          SFN-TAG-DETAILS
+########################################################
+# Get mappings
+GET sfn-tag-details
+
+# Get all docs (random order and limited to top 10)
+GET sfn-tag-details/_search
+
+
+# Get all docs (ordered by newest first and limited to 1000)
+GET sfn-tag-details/_search
+{
+  "query": {
+    "match_all":{}
+  },
+  "size": 100,
+  "sort": [
+    {
+      "doc_updated": {
+        "order": "desc"
+      }
+    }
+  ]
+}
+
+
+# Get tag-docs with name matching domain entered
+GET sfn-tag-details/_search
+{
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "term": {
+            "name.keyword": "Unit42.DisableFileOpenWarning"
+          }
+        }
+      ]
+    }
+  }
+}
+
+
+# Get docs where tag[tag_class] is "malware_family"
+# Returns any doc with that in it
+GET sfn-tag-details/_search
+{
+  "query": {
+    "nested": {
+      "path": "tag",
+      "query": {
+        "bool": {
+          "must": [
+            {
+              "match": {
+                "tag.tag_class": "malware_family"
+              }
+            }
+          ]
+        }
+      },
+      "inner_hits": { 
+        "highlight": {
+          "fields": {
+            "tag.tag_class": {}
+          }
+        }
+      }
+    }
+  }
+}
+
+
+# Get number of representative details docs.  If any of these
+# are more than 1, we have created too many and needs to be dealt with
+GET sfn-tag-details/_search
+{
+    "aggs" : {
+        "domain-details" : {
+            "terms" : { 
+              "field" : "name.keyword", 
+              "size":10000
+            }
+        }
+    },
+    "size" : 0
+}
+
+
+# Get details doc where name matches entry
+GET sfn-tag-details/_search
+{
+  "query": {
+    "bool": {
+       "must": [{"match": {"title": "Hello World!"}}]
+    }
+  }
+}
+
+
+# Example push of info to a new domain-doc
+POST sfn-tag-details/doc/Unit42.SPSolutionsTest
+{
+  "name": "mytest.net",
+  "last_updated": "2017-12-15 22:02:47",
+  "processed": 100
+}
+
+########################################################
+###        END SFN-TAG-DETAILS
+########################################################
+
+########################################################
+###         SFN-DNS-UNKNOWN
+########################################################
+
+# Get all docs (random order limited to top 10)
+GET sfn-dns-unknown/_search 
+{
+  "query": {
+    "match_all": {}
+  }
+}
+
+
+# Get all docs (ordered by newest first and limited to top 1000)
+GET sfn-dns-unknown/_search
+{
+  "query": {
+    "match_all": {}
+  },
+  "size": 1000,
+  "sort": [
+    {
+      "@timestamp": {
+        "order": "desc"
+      }
+    }
+  ]
+}
+
+
+# Example push of info to a new unknown doc
+POST sfn-dns-unknown/doc 
+{
+  "@timestamp":"2020-12-06T13:22:13.000Z",
+               "host":"192.168.86.140",
+        "device_name": "PA-VM",
+               "rule":"ScriptGen - Endpoint DNS",
+        "domain_name": "privatemail.website",
+            "sig_num": "3800081",
+    "threat_category":"dns-wildfire",
+          "processed": "0"
+
+}
+
+########################################################
+###             END SFN-DNS-UNKNOWN
+########################################################
+
+GET af-details
+GET af-details/_search
+{
+  "query": {
+    "match_all": {}
+  }
+}
+
+}
