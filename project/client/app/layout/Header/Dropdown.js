@@ -1,6 +1,7 @@
 import React from "react";
 import styled from "styled-components";
 import Logo from "public/images/logo-pan-bg.png";
+import MMLogo from "public/images/MM-logo.png";
 
 export default class Dropdown extends React.Component {
   constructor() {
@@ -29,13 +30,8 @@ export default class Dropdown extends React.Component {
             <h3> Palo Alto Network Applications</h3>
             <Menu>
               <li>
-                <a href="http://www.google.com" target="_blank">
-                  Google
-                </a>
-              </li>
-              <li>
-                <a href="http://www.google.com" target="_blank">
-                  Another Link
+                <a href="https://autofocus.paloaltonetworks.com" target="_blank">
+                  AutoFocus
                 </a>
               </li>
             </Menu>
@@ -44,8 +40,8 @@ export default class Dropdown extends React.Component {
             <h3>Extensions</h3>
             <Menu>
               <li>
-                <IconLink href="http://www.google.com" target="_blank">
-                  <img src={Logo} />
+                <IconLink href="https://live.paloaltonetworks.com/t5/MineMeld/ct-p/MineMeld" target="_blank">
+                  <img src={MMLogo} />
                   <span>MineMeld</span>
                 </IconLink>
               </li>

@@ -1,19 +1,29 @@
 import Dashboard from "./Dashboard";
 import Domain from "./Domain";
-import DomainChild from "./DomainChild";
-import DomainDashboard from "./DomainDashboard"
+import DomainMalDNSResolver from "./DomainMalDNSResolver";
+import DomainMalResolvers from "./DomainMalResolvers";
+import DomainMalByFile from "./DomainMalByFile";
+import DomainAtRiskClients from "./DomainAtRiskClients";
+import DomainTop10Malware from "./DomainTop10Malware";
+import DomainDashboard from "./DomainDashboard";
 import IOT from "./IOT";
 import IOTChild from "./IOTChild";
 import IOTDashboard from "./IOTDashboard";
 import FAQ from "./FAQ";
+import Admin from "./Admin";
 
 export default {
   Dashboard,
   Domain,
-  DomainChild,
+  DomainTop10Malware,
+  DomainMalDNSResolver,
+  DomainAtRiskClients,
+  DomainMalResolvers,
+  DomainMalByFile,
   DomainDashboard,
   IOT,
   IOTChild,
   IOTDashboard,
-  FAQ
+  FAQ,
+  Admin
 };

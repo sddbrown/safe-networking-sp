@@ -11,7 +11,8 @@ class RouteManager extends Component {
         [name.startsWith("dashboard")]: Pages.Dashboard,
         [name.startsWith("iot")]: Pages.IOT,
         [name.startsWith("domain")]: Pages.Domain,
-        [name.startsWith("faq")]: Pages.FAQ
+        [name.startsWith("faq")]: Pages.FAQ,
+        [name.startsWith("admin")]: Pages.Admin
       };
 
       return routes[true];
