@@ -4,8 +4,8 @@ import styled from "styled-components";
 
 export default class Sidebar extends Component {
   renderLinks() {
-    return this.props.links.map(l => (
-      <li>
+    return this.props.links.map((l,i) => (
+      <li key={i}>
         <IconLink routeName={l.routeName}>
           <i className={`fa fa-${l.icon}`} />
           <span>{l.title}</span>

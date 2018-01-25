@@ -7,7 +7,12 @@ export default class Domain extends Component {
   renderContent() {
     const { route } = this.props;
     if (route.name === "domain") return <Pages.DomainDashboard />;
-    if (route.name === "domain.child-route") return <Pages.DomainChild />;
+    if (route.name === "domain.malware-by-file") return <Pages.DomainMalByFile />;
+    if (route.name === "domain.malware-resolvers") return <Pages.DomainMalResolvers />;
+    if (route.name === "domain.malware-dns-resolver") return <Pages.DomainMalDNSResolver />;
+    if (route.name === "domain.at-risk-clients") return <Pages.DomainAtRiskClients />;
+    if (route.name === "domain.top-10-malware") return <Pages.DomainTop10Malware />;
+
   }
   
   render() {
@@ -21,10 +26,30 @@ export default class Domain extends Component {
               icon: "tachometer"
             },
             {
-              routeName: "domain.child-route",
+              routeName: "domain.malware-by-file",
               title: "Malware by FileType",
-              icon: "gear"
-            }
+              icon: "pie-chart"
+            },
+            {
+              routeName: "domain.malware-resolvers",
+              title: "Malware Resolvers",
+              icon: "bar-chart"
+            },
+            {
+              routeName: "domain.malware-dns-resolver",
+              title: "Malware by DNS Server",
+              icon: "bar-chart"
+            },
+            {
+              routeName: "domain.at-risk-clients",
+              title: "At Risk Clients",
+              icon: "bar-chart"
+            },
+            {
+              routeName: "domain.top-10-malware",
+              title: "Top 10 Malware",
+              icon: "bar-chart"
+            }               
           ]}
         />
         {this.renderContent()}
