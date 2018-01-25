@@ -4,7 +4,7 @@
 
 # Install & start the SafeNetworking Application
 ### 1. Clone repo
-```git clone git@github.com:sdndude/safe-networking-sp.git```
+```git clone https://www.github.com/PaloAltoNetworks/safe-networking-sp.git```
 
 ### 2. Change into repo directory
 ```$ cd safe-networking-sp```
