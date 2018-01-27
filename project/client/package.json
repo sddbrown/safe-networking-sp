@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "babel client -w -o static/js/safe-networking.js",
+    "build": "node_modules/.bin/webpack",
     "dev:nodash": "webpack-dev-server --hot --inline --config webpack.config.js",
     "dev": "webpack-dashboard -- webpack-dev-server --config webpack.config.js"
   },

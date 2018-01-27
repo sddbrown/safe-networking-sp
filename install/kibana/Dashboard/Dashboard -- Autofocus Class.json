@@ -1,0 +1,16 @@
+[
+  {
+    "_id": "ce25ab20-ff93-11e7-b08d-4f64676a2f8a",
+    "_type": "visualization",
+    "_source": {
+      "title": "Dashboard -- AutoFocus Class",
+      "visState": "{\"title\":\"Dashboard -- AutoFocus Class\",\"type\":\"tagcloud\",\"params\":{\"maxFontSize\":50,\"minFontSize\":18,\"orientation\":\"single\",\"scale\":\"linear\",\"hideLabel\":false},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"enabled\":true,\"type\":\"terms\",\"schema\":\"segment\",\"params\":{\"field\":\"event_tag.tag_class.keyword\",\"exclude\":\"Not Available|malicious_behavior\",\"size\":10,\"order\":\"desc\",\"orderBy\":\"1\",\"customLabel\":\"AutoFocus Class\"}}]}",
+      "uiStateJSON": "{}",
+      "description": "",
+      "version": 1,
+      "kibanaSavedObjectMeta": {
+        "searchSourceJSON": "{\"index\":\"b92a9480-f39d-11e7-958a-cd050f21cac3\",\"filter\":[],\"query\":{\"language\":\"lucene\",\"query\":\"\"}}"
+      }
+    }
+  }
+]
