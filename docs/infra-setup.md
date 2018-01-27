@@ -67,26 +67,6 @@ sudo apt-mark hold kibana
 sudo apt-mark hold logstash
 ```
 
-## Node.js
-The SafeNetworking portal uses Node.js and React to provide a user interface 
-```
-cd ~
-curl -sL https://deb.nodesource.com/setup_8.x -o nodesource_setup.sh
-```
-Run the script using sudo to add the PPA for Node:
-```
-sudo bash nodesource_setup.sh
-```
-The PPA will be added to your configuration and your local package cache will be updated automatically. 
-You can install the Node.js package in the same way you did above:
-```
-sudo apt-get install nodejs
-```
-The nodejs package contains the nodejs binary as well as npm, so you don't need to install npm separately. 
-You will, however, need to install the build-essential package for running the dev code:
-```
-sudo apt-get install build-essential
-```
 </br>
 </br>
 
