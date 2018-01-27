@@ -31,7 +31,7 @@ sudo cp install/logstash/sfn-dns.conf /etc/logstash/conf.d/
 ### 9. Edit the /etc/logstash/conf.d/sfn-dns.conf file and replace the "CHANGEME" with your logstash listener and elasticsearch server where appropriate (3 places)
 Example Input and Output stanzas (the Filter stanza has been omitted for clarity)
 
-```json
+```
 input {
   http {
     host => "10.10.10.10"
@@ -79,8 +79,11 @@ curl -XPUT -H'Content-Type: application/json' 'http://localhost:9200/sfn-tag-det
 ### 10. Configure the Firewall to send events
 [NGFW Configuration](docs/NGFW/ngfw-configuration.md)
 
-### 11. Start the portal
-```python ./sfn > log/console-\`date '%Y-%m-%d %H:%M:%S'\`.log 2>&1```
+### 11. Start the portal  (make sure yoyu are in the safe-networking-sp directory)
+```
+source env/bin/activate
+python ./sfn > log/console-\`date '%Y-%m-%d %H:%M:%S'\`.log 2>&1
+```
 
 ### 12. Kibana setup
 SafeNetworking is now running and processing events.  You will need to perfrom some minor post install setup in Kibana for the visualizations and dashboards.
