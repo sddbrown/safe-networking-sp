@@ -5,44 +5,39 @@
 # Install & start the SafeNetworking Application
 ### 1. Clone repo
 ```git clone https://www.github.com/PaloAltoNetworks/safe-networking-sp.git```
-
+<br/><br/>
 ### 2. Change into repo directory
 ```cd safe-networking-sp```
-
+<br/><br/>
 ### 3. Create python 3.6 virtualenv
 ```python3.6 -m venv env```
-
+<br/><br/>
 ### 4. Activate virtualenv
 ```source env/bin/activate```
-
+<br/><br/>
 ### 5. Download required libraries
 ```pip install -r requirements.txt```
-
+<br/><br/>
 ### 6. Deactivate the virutalenv (we will return to it later)
 ```deactivate```
-
+<br/><br/>
 ### 7. Configure the .panrc for your installation
 [Configuring SafeNetworking](docs/sfn-config.md)
-
+<br/><br/>
 ### 8. Copy the SafeNetworking logstash configuration files to the logstash config directory
 ```
 sudo cp install/logstash/sfn-dns.conf /etc/logstash/conf.d/
 ```
+<br/><br/>
 ### 9. Edit the /etc/logstash/conf.d/sfn-dns.conf file and replace the "CHANGEME" with your logstash listener and elasticsearch server where appropriate (3 places)
-Example Input and Output stanzas (the Filter stanza has been omitted for clarity)
+Example Input and Output stanzas.  Do not delete any of the lines. The filter stanza has been omitted and only sections of the input and output stanzas are show for clarity.
 
-```json
+```
 input {
   http {
     host => "10.10.10.10"
     port => '9563'
-    response_headers => {
-      "Access-Control-Allow-Origin" => "*"
-      "Content-Type" => "text/plain"
-      "Access-Control-Allow-Headers" => "Origin, X-Requested-With, Content-Type, Accept"
-     }
-   }
- }
+...
 
 output {
   if "SFN-DNS" in [tags] {
@@ -57,32 +52,27 @@ output {
       hosts => ["10.10.10.10:9200"]
       index => ["sfn-dns-unknown"]
     }
-    stdout { codec => rubydebug }
-  }
-  stdout { codec => rubydebug }
-}
+...
 ```
-
-### 9. Install the index mappings into ElasticSearch
-NOTE: Change localhost below to the IP address you bound ES to, if you did that in the Infrastructure Setup steps
+<br/><br/>
+### 10. Install the index mappings into ElasticSearch
+NOTE: The setup script runs against localhost. If ES is bound to a particular IP address, you will need to edit the file and change it to reflect that.
 ```
-curl -XPUT -H'Content-Type: application/json' 'http://localhost:9200/af-details/' -d @install/elasticsearch/af-details.json
-
-curl -XPUT -H'Content-Type: application/json' 'http://localhost:9200/sfn-dns-event/' -d @install/elasticsearch/sfn-dns-event.json
-
-curl -XPUT -H'Content-Type: application/json' 'http://localhost:9200/sfn-domain-details/' -d @install/elasticsearch/sfn-domain-details.json
-
-curl -XPUT -H'Content-Type: application/json' 'http://localhost:9200/sfn-tag-details/' -d @install/elasticsearch/sfn-tag-details.json
+cd install
+bash ./setup.sh
 ```
+<br/><br/>
 
-
-### 10. Configure the Firewall to send events
+### 11. Configure the Firewall to send events
 [NGFW Configuration](docs/NGFW/ngfw-configuration.md)
-
-### 11. Start the portal
-```python ./sfn > log/console-\`date '%Y-%m-%d %H:%M:%S'\`.log 2>&1```
-
-### 12. Kibana setup
+<br/><br/>
+### 12. Start the portal  (make sure you are in the safe-networking-sp directory)
+```
+source env/bin/activate
+python ./sfn > log/console-\`date '%Y-%m-%d %H:%M:%S'\`.log 2>&1
+```
+<br/><br/>
+### 13. Kibana setup
 SafeNetworking is now running and processing events.  You will need to perfrom some minor post install setup in Kibana for the visualizations and dashboards.
 [Kibana setup for SafeNetworking](docs/kibana-setup.md)
 
