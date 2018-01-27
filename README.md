@@ -64,17 +64,12 @@ output {
 ```
 
 ### 10. Install the index mappings into ElasticSearch
-NOTE: Change localhost below to the IP address you bound ES to, if you did that in the Infrastructure Setup steps
+NOTE: The setup script runs against localhost. If ES is bound to a particular IP address, you will need to edit the file and change it to reflect that.
 ```
-curl -XPUT -H'Content-Type: application/json' 'http://localhost:9200/af-details/' -d @install/elasticsearch/af-details.json
-
-curl -XPUT -H'Content-Type: application/json' 'http://localhost:9200/sfn-dns-event/' -d @install/elasticsearch/sfn-dns-event.json
-
-curl -XPUT -H'Content-Type: application/json' 'http://localhost:9200/sfn-domain-details/' -d @install/elasticsearch/sfn-domain-details.json
-
-curl -XPUT -H'Content-Type: application/json' 'http://localhost:9200/sfn-tag-details/' -d @install/elasticsearch/sfn-tag-details.json
+cd install
+bash ./setup.sh
 ```
-
+<br/><br/>
 
 ### 11. Configure the Firewall to send events
 [NGFW Configuration](docs/NGFW/ngfw-configuration.md)
