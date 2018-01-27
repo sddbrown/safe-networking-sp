@@ -54,6 +54,11 @@ def initBackgroundProcs():
     application to have it's data gathered, maniplutated and stored properly. 
     '''
 
+    # Check to make sure we have the API key(s) set first
+    if app.config['AUTOFOCUS_API_KEY'] == "NOT-SET":
+        app.logger.critical("API Key for Autofocus is not set in .panrc, exiting")
+        exit()
+        
     def initProcs():
         not_started = True
         app.logger.info("Initializing Background Processes")
