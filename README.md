@@ -63,7 +63,7 @@ output {
 }
 ```
 
-### 9. Install the index mappings into ElasticSearch
+### 10. Install the index mappings into ElasticSearch
 NOTE: Change localhost below to the IP address you bound ES to, if you did that in the Infrastructure Setup steps
 ```
 curl -XPUT -H'Content-Type: application/json' 'http://localhost:9200/af-details/' -d @install/elasticsearch/af-details.json
@@ -76,16 +76,16 @@ curl -XPUT -H'Content-Type: application/json' 'http://localhost:9200/sfn-tag-det
 ```
 
 
-### 10. Configure the Firewall to send events
+### 11. Configure the Firewall to send events
 [NGFW Configuration](docs/NGFW/ngfw-configuration.md)
 
-### 11. Start the portal  (make sure yoyu are in the safe-networking-sp directory)
+### 12. Start the portal  (make sure yoyu are in the safe-networking-sp directory)
 ```
 source env/bin/activate
 python ./sfn > log/console-\`date '%Y-%m-%d %H:%M:%S'\`.log 2>&1
 ```
 
-### 12. Kibana setup
+### 13. Kibana setup
 SafeNetworking is now running and processing events.  You will need to perfrom some minor post install setup in Kibana for the visualizations and dashboards.
 [Kibana setup for SafeNetworking](docs/kibana-setup.md)
 
