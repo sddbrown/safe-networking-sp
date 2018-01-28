@@ -107,6 +107,8 @@ env/
 # Safe-networking project specific
 scratch
 instance/config
+project/.panrc
+.panrc
 
 # Node + npm Stuff
 node_modules/
