@@ -71,6 +71,7 @@ bash ./setup.sh
 source env/bin/activate
 python ./sfn > log/console.log 2>&1
 ```
+#### NOTE: The above two commands is how you will start it from now on.
 <br/><br/>
 ### 13. Kibana setup
 SafeNetworking is now running and processing events.  You will need to perfrom some minor post install setup in Kibana for the visualizations and dashboards.
