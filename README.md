@@ -69,7 +69,7 @@ bash ./setup.sh
 ### 12. Start the portal  (make sure you are in the safe-networking-sp directory)
 ```
 source env/bin/activate
-python ./sfn > log/console-\`date '%Y-%m-%d %H:%M:%S'\`.log 2>&1
+python ./sfn > log/console.log 2>&1
 ```
 <br/><br/>
 ### 13. Kibana setup
