@@ -41,14 +41,14 @@ input {
 
 output {
   if "SFN-DNS" in [tags] {
-    elasticsearch { 
+    elasticsearch {
       hosts => ["10.10.10.10:9200"]
       index => ["sfn-dns-event"]
     }
     stdout { codec => rubydebug }
   }
   else if "_grokparsefailure" in [tags] {
-    elasticsearch { 
+    elasticsearch {
       hosts => ["10.10.10.10:9200"]
       index => ["sfn-dns-unknown"]
     }
@@ -69,7 +69,7 @@ bash ./setup.sh
 ### 12. Start the portal  (make sure you are in the safe-networking-sp directory)
 ```
 source env/bin/activate
-python ./sfn > log/console.log 2>&1
+python ./sfn >log/console-"$(date +"%Y-%d-%m %H:%M:%S").log" 2>&1
 ```
 #### NOTE: The above two commands is how you will start it from now on.
 <br/><br/>
@@ -80,4 +80,3 @@ SafeNetworking is now running and processing events.  You will need to perfrom s
 <br/><br/>
 ## Best Practices and Optional Configuration
 You should be all set.  For even more ideas on what you can do with the system and other things that you can download and install to get the most out of SafeNetworking, checkout the [Wiki](https://github.com/PaloAltoNetworks/safe-networking-sp/wiki)!!
-
