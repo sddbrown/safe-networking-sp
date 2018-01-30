@@ -18,11 +18,7 @@ from project.dns.runner import processDNS
 # application.  We are forcing it with the initProcs() call so we start
 # processing in the background as soon as the application is started.
 @app.before_first_request
-'''
-This starts off everything before any requests are made to the webpage
-'''
 def activate_job():
-
     def runDNS():
         '''
         Searches for any unprocessed sfn-dns documents, changes them to in

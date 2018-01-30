@@ -14,8 +14,6 @@ def updateAfStats(afInfo):
     Update the sfn-details af-doc.
     If it doesn't exist, the 'upsert' does that for us.
     '''
-    # Define a default Elasticsearch client
-    #connections.create_connection(hosts=[app.config['ELASTICSEARCH_HOST']])
     now = datetime.datetime.now()
 
     try:
