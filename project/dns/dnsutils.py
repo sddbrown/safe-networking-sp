@@ -262,11 +262,11 @@ def assessTags(tagsObj):
 
             # Went through all the tags available and none were of interest
             if not taggedEvent:
-                tagInfo = {"tag_name":"Not Available",
-                            "public_tag_name":"Not Available",
-                            "tag_class":"Not Available",
+                tagInfo = {"tag_name":"Low Priority Tags",
+                            "public_tag_name":"Low Priority Tags",
+                            "tag_class":"Low Priority Tags",
                             "sample_date":"2000-01-01T00:00:00",
-                            "file_type":"Not Available",
+                            "file_type":"Low Priority Tags",
                             "confidence_level":0}
                 taggedEvent = True
 
