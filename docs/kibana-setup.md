@@ -3,7 +3,7 @@ The URL can sometimes grow to be too large for some browsers to handle. To count
 ![Image of URL fix](images/url_fix.png)
 <br/><br/><br/><br/>
 
-# Set up index patterns 
+# Set up index patterns
 ### NOTE: This will not work if there is not data to index.  Make sure your firewall is sending data first.
 Click on the Management tab on the left hand side and click "Index Patterns"
 ![Managment](images/kibana-mgmt.png)
@@ -11,10 +11,10 @@ Click on the Management tab on the left hand side and click "Index Patterns"
 The first index to set up is the sfn-dns-event index.  Put that name in the text box and it should match the index as in the screenshot.  Click the next step button.
 <br/><br/>
 ![Event Index](images/sfn-dns-event-index.png)<br/>
-For the "Time filter field name" select the @timestamp in the dropdown and click the create index pattern button
+For the "Time filter field name" select the updated_at in the dropdown and click the create index pattern button
 ![Time Filter](images/timestamp.png)
 <br/><br/><br/><br/>
-#### Follow the same procedure for the af-details index, but in the "Time filter field name" dropdown select "I don't want to use the Time Filter" 
+#### Follow the same procedure for the af-details index, but in the "Time filter field name" dropdown select "I don't want to use the Time Filter"
 #### We don't need index patterns for sfn-domain-details or sfn-tag-details
 <br/><br/><br/><br/>
 
