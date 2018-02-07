@@ -1,5 +1,31 @@
+# Version 2.0.2
+Release Date: 09 Feb 2018
+<br/>
+### Issues resolved
+[Concurrency issue with af-details #30](https://github.com/PaloAltoNetworks/safe-networking-sp/issues/30)<br/>
+[SFN2.0.1 not populating sfn-domain-details index docs](https://github.com/PaloAltoNetworks/safe-networking-sp/issues/62)<br/>
+[sfn linting score](https://github.com/PaloAltoNetworks/safe-networking-sp/issues/58)<br/>
+[runner linting score](https://github.com/PaloAltoNetworks/safe-networking-sp/issues/49)<br/>
+[dnsutils linting score](https://github.com/PaloAltoNetworks/safe-networking-sp/issues/48)<br/>
+[dns linting score](https://github.com/PaloAltoNetworks/safe-networking-sp/issues/47)<br/>
+[views linting score](https://github.com/PaloAltoNetworks/safe-networking-sp/issues/46)<br/>
+[init linting score](https://github.com/PaloAltoNetworks/safe-networking-sp/issues/45)<br/>
+[instance empty directory](https://github.com/PaloAltoNetworks/safe-networking-sp/issues/52)<br/>
+[public = empty directory](https://github.com/PaloAltoNetworks/safe-networking-sp/issues/51)<br/>
+[cleanup unused directory](https://github.com/PaloAltoNetworks/safe-networking-sp/issues/50)<br/>
+[Unassigned shards error](https://github.com/PaloAltoNetworks/safe-networking-sp/issues/32)<br/>
+
+### Known issues
+- Intermittently, there is a concurrency error that will show up in the sfn.log as an ERROR and it will create subsequent ERROR messages as the system cannot work with the domain details document correctly.  To remedy this, as it *could* slow down performance, delete the domain document in question. Contact the account team or SP-Solutions with help on this matter.
+
+<br/><br/><br/><br/>
+
+
 # Version 2.0
+Release Date: 17 Jan 2018
 
-- Intermittently, there is a concurrency error that will show up in the sfn.log as an ERROR and it will create subsequent ERROR messages as the system cannot work with the domain details document correctly.  To remedy this, as it *could* slow down performance, delete the domain document in question. Contact the account team or SP-Solutions with help on this matter. 
+### Issues Resolved
 
 
+### Known issues
+- Intermittently, there is a concurrency error that will show up in the sfn.log as an ERROR and it will create subsequent ERROR messages as the system cannot work with the domain details document correctly.  To remedy this, as it *could* slow down performance, delete the domain document in question. Contact the account team or SP-Solutions with help on this matter.
