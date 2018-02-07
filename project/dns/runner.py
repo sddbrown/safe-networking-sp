@@ -36,9 +36,9 @@ def processDNS():
 
     # Create search for all unprocessed events
     eventSearch = Search(index="sfn-dns-event") \
-                .query("match", threat_category="wildfire") \
+                .query("match", threat_category="dns") \
                 .query("match", processed=0)  \
-                .sort({"received_at": {"order" : "asc"}})
+                .sort({"received_at": {"order" : "desc"}})
 
     # Limit the size of the returned docs to the specified config paramter
     eventSearch = eventSearch[:qSize]
