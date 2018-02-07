@@ -9,7 +9,7 @@ from project.dns.dns import AFDetailsDoc, TagDetailsDoc, DomainDetailsDoc
 from elasticsearch_dsl import DocType, Search, Date, Integer, Keyword, Text, Ip, connections
 
 
-def updateAfStats(afInfo):
+def updateAfStats():
     '''
     Update the sfn-details af-doc.
     If it doesn't exist, the 'upsert' does that for us.
@@ -29,9 +29,17 @@ def updateAfStats(afInfo):
                                     daily_points_remaining=0,
                                     minute_bucket_start=now,
                                     daily_bucket_start=now)
-
-
     # The AF Doc should exist by now
+
+
+
+    # Just grab a tag that we know exists so we can get the rolling point total
+    returnData = getTagInfo("WildFireTest")
+    afInfo = returnData['bucket_info']
+
+    app.logger.debug(f"Updating af-details with "
+                     f"{afInfo['daily_points_remaining']} remaining points")
+    # Update the af-details doc in the DB
     afDoc.minute_points=afInfo['minute_points']
     afDoc.minute_points_remaining=afInfo['minute_points_remaining']
     afDoc.daily_points=afInfo['daily_points']
@@ -128,7 +136,7 @@ def processTag(tagName):
 
 
     except NotFoundError as nfe:
-        app.logger.info(f"No local cache found for tag {tagName}")
+        app.logger.info(f"No local cache found for tag {tagName} - Creating")
         updateDetails = True
         updateType = "Creating"
 
@@ -318,10 +326,8 @@ def getDomainInfo(threatDomain):
                                         data=json.dumps(resultData))
             domainData = cookieResults.json()
             if domainData['af_complete_percentage'] >= maxPercentage :
-                updateAfStats(domainData['bucket_info'])
                 break
             else:
-                updateAfStats(domainData['bucket_info'])
                 app.logger.info(f"Search completion " +
                                 f"{domainData['af_complete_percentage']}% for " +
                                 f"{threatDomain} at {timer+1} minute(s): " +
@@ -343,8 +349,10 @@ def getDomainInfo(threatDomain):
 
     else:
         app.logger.debug(f"No samples found for {threatDomain} in time allotted")
-        domainObj.append(('2000-01-01T00:00:00','None',[('Not Available for Domain',
-                         'Not Available for Domain', 'Not Available for Domain')]))
+        domainObj.append(('2000-01-01T00:00:00','None',
+                         [('No Samples Returned for Domain',
+                           'No Samples Returned for Domain',
+                           'No Samples Returned for Domain')]))
 
     app.logger.debug(f"getDomainInfo() returns: {domainObj}")
 
