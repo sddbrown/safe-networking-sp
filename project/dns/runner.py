@@ -8,7 +8,7 @@ from project.dns.dns import DNSEventDoc
 from elasticsearch import TransportError
 from elasticsearch_dsl import connections
 from elasticsearch.exceptions import NotFoundError
-from project.dns.dnsutils import getDomainDoc, assessTags
+from project.dns.dnsutils import getDomainDoc, assessTags, updateAfStats
 
 
 
@@ -85,12 +85,14 @@ def processDNS():
         with Pool(cpu_count() * 4) as pool:
             results = pool.map(searchDomain, priDocIds)
 
+        updateAfStats()
         app.logger.debug(f"Results for processing primary events {results}")
 
         # Do the same with the generic/secondary keys and pace so we don't kill AF
         with Pool(cpu_count() * 4) as pool:
             results = pool.map(searchDomain, secDocIds)
 
+        updateAfStats()
         app.logger.debug(f"Results for processing AF lookup events {results}")
 
     # This else gets triggered so we only do one document at a time and is for
