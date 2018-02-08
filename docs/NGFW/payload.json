@@ -1,9 +1,0 @@
-{
-    "msg_gen_time": "$time_generated",
-    "device_name": "$device_name",
-    "src_ip": "$src",
-    "dst_ip": "$dst",
-    "threat_id": "$threatid",
-    "threat_category": "$thr_category",
-    "rule": "$rule"
-}

@@ -6,6 +6,7 @@ Release Date: 09 Feb 2018
 [SFN2.0.1 not populating sfn-domain-details index docs](https://github.com/PaloAltoNetworks/safe-networking-sp/issues/62)<br/>
 [Change "Not Available" verbage](https://github.com/PaloAltoNetworks/safe-networking-sp/issues/60)<br/>
 [Runner processDNS() search should be descending](https://github.com/PaloAltoNetworks/safe-networking-sp/issues/64)<br/>
+[Move documentation to the Wiki](https://github.com/PaloAltoNetworks/safe-networking-sp/issues/36)<br/>
 [sfn linting score](https://github.com/PaloAltoNetworks/safe-networking-sp/issues/58)<br/>
 [runner linting score](https://github.com/PaloAltoNetworks/safe-networking-sp/issues/49)<br/>
 [dnsutils linting score](https://github.com/PaloAltoNetworks/safe-networking-sp/issues/48)<br/>
