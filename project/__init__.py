@@ -12,66 +12,66 @@ from logging.handlers import RotatingFileHandler
 app = Flask(__name__)
 
 
-# Set the configuration parameters that are used by the application.  
+# Set the configuration parameters that are used by the application.
 # These values are overriden by the .panrc file located in the base directory
 # for the application
 #
 # ---------- APPLICATION SETTINGS --------------
 #
 # Current version number of SafeNetworking
-app.config['VERSION'] = "2.0.1"
+app.config['VERSION'] = "2.0.2"
 #
-# When set to True, this slows down the logging by only processing 1 event at a 
+# When set to True, this slows down the logging by only processing 1 event at a
 # time and allows us to see what is going on if there are bugs
 app.config['DEBUG_MODE'] = False
 #
 # Flask setting for where session manager contains the info on the session(s)
 app.config['SESSION_TYPE'] = "filesystem"
 #
-# Secret key needed by session setting above.  
+# Secret key needed by session setting above.
 app.config['SECRET_KEY'] = "\xfd{H\xe5<\x95\xf9\xe3\x96.5\xd1\x01O<!\xd5"
 #
 # Sets the base directory for the application
-app.config['BASE_DIR'] = os.path.abspath(os.path.dirname(__file__)) 
+app.config['BASE_DIR'] = os.path.abspath(os.path.dirname(__file__))
 #
-# Set the number of seconds for multi-threading to wait between processing calls 
-app.config['POOL_TIME'] = 10   
+# Set the number of seconds for multi-threading to wait between processing calls
+app.config['POOL_TIME'] = 10
 #
 # Set the number of seconds - what the hell is this for?
 #app.config['SEC_PROCESS_POOL_TIME'] = 300
 #
 # When SafeNetworking is started, number of documents to read from the DB.  The
-# larger the number, the longer this will take to catch up.  
+# larger the number, the longer this will take to catch up.
 app.config['DNS_EVENT_QUERY_SIZE'] = 1000
 app.config['IOT_EVENT_QUERY_SIZE'] = 1000
 # app.config['SEC_PROCESS_QUERY_SIZE'] = 1000 - what the hell is this for?
 #
-# SafeNetworking caches domain info from AutoFocus.  This setting specifies, in 
+# SafeNetworking caches domain info from AutoFocus.  This setting specifies, in
 # days, how long the cache is ok.  If there is cached info on this domain and it
 # is older than the setting, SFN will query AF and update as necessary and reset
 # the cache "last_updated" setting in ElasticSearch.
 app.config['DNS_DOMAIN_INFO_MAX_AGE'] = 30
 #
-# The Autofocus API isn't the speediest thing on the planet.  Usually, the most 
+# The Autofocus API isn't the speediest thing on the planet.  Usually, the most
 # pertinent info is within the first couple of minutes of query time.  So, set
-# this to drop out of the processing loop and stop waiting for the query to 
+# this to drop out of the processing loop and stop waiting for the query to
 # finish - which could take 20mins.  No lie....   This is set in minutes
 app.config['AF_LOOKUP_TIMEOUT'] = 2
 #
 # The maximum percentage of the AF query we are willing to accept.  If, when we
 # check the timer above, the value is greater than this percentage, we bail out
-# of the loop.  The lower the number, the more likely that we may not get a 
-# result.  Though, usually, 2 minutes and 20 percent is enough to get at least 
+# of the loop.  The lower the number, the more likely that we may not get a
+# result.  Though, usually, 2 minutes and 20 percent is enough to get at least
 # the latest result.
 app.config['AF_LOOKUP_MAX_PERCENTAGE'] = 20
 #
-# The maximum age for tag info.  This doesn't need to be updated as often as 
-# the domain or other items, but should be done periodically just in case.. 
+# The maximum age for tag info.  This doesn't need to be updated as often as
+# the domain or other items, but should be done periodically just in case..
 # Setting is in days.
 app.config['DOMAIN_TAG_INFO_MAX_AGE'] = 120
 #
-# Dictionary definition of confidence levels represented as max days and the 
-# level associated  - i.e. 3:80 would represent an 80% confidence level if the 
+# Dictionary definition of confidence levels represented as max days and the
+# level associated  - i.e. 3:80 would represent an 80% confidence level if the
 # item is no more than 3 days old
 app.config['CONFIDENCE_LEVELS'] = "{'15':90,'25':80,'40':70,'50':60,'60':50}"
 #
@@ -118,13 +118,13 @@ app.config['AUTOFOCUS_TAG_URL'] = "https://autofocus.paloaltonetworks.com/api/v1
 app.config.from_pyfile('.panrc')
 # Add bootstrap object for Flask served pages
 bs = Bootstrap(app)
-# Add Elasticsearch object for our instance of ES 
+# Add Elasticsearch object for our instance of ES
 es = Elasticsearch(f"{app.config['ELASTICSEARCH_HOST']}:{app.config['ELASTICSEARCH_PORT']}")
 
-# Set up logging for the application - we may want to revisit this 
+# Set up logging for the application - we may want to revisit this
 # see issue #10 in repo
-handler = RotatingFileHandler('log/sfn.log', 
-                            maxBytes=app.config['LOG_SIZE'], 
+handler = RotatingFileHandler('log/sfn.log',
+                            maxBytes=app.config['LOG_SIZE'],
                             backupCount=app.config['LOG_BACKUPS'])
 logFormat = logging.Formatter('%(asctime)s - %(module)s:%(funcName)s[%(lineno)i] - %(thread)d - [%(levelname)s] -- %(message)s')
 handler.setLevel(app.config["LOG_LEVEL"])
@@ -136,4 +136,3 @@ app.logger.info(f"ElasticSearch host is: {app.config['ELASTICSEARCH_HOST']}:{app
 # Register blueprints
 from project.views import sfn_blueprint
 app.register_blueprint(sfn_blueprint)
-

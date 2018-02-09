@@ -1,8 +1,10 @@
-# Read the Setup Instructions if you do not have an ElasticStack cluster (i.e. ElasticCloud or a local install)
-[Infrastructure Setup Instructions](docs/infra-setup.md)
+# CURRENT VERSION 2.0.2
+For the latest information and release specific notes view the [release notes](docs/release-notes.md)
 
+## Read the Setup Instructions if you do not have an ElasticStack cluster (i.e. ElasticCloud or a local install)
+[Infrastructure Setup Instructions](https://github.com/PaloAltoNetworks/safe-networking-sp/wiki/Infrastructure-Setup)
 
-# Install & start the SafeNetworking Application
+## Install & start the SafeNetworking Application
 ### 1. Clone repo
 ```git clone https://www.github.com/PaloAltoNetworks/safe-networking-sp.git```
 <br/><br/>
@@ -22,7 +24,7 @@
 ```deactivate```
 <br/><br/>
 ### 7. Configure the .panrc for your installation
-[Configuring SafeNetworking](docs/sfn-config.md)
+[Configuring SafeNetworking](https://github.com/PaloAltoNetworks/safe-networking-sp/wiki/Default-.panrc-configuration-file)
 <br/><br/>
 ### 8. Copy the SafeNetworking logstash configuration files to the logstash config directory
 ```
@@ -41,14 +43,14 @@ input {
 
 output {
   if "SFN-DNS" in [tags] {
-    elasticsearch { 
+    elasticsearch {
       hosts => ["10.10.10.10:9200"]
       index => ["sfn-dns-event"]
     }
     stdout { codec => rubydebug }
   }
   else if "_grokparsefailure" in [tags] {
-    elasticsearch { 
+    elasticsearch {
       hosts => ["10.10.10.10:9200"]
       index => ["sfn-dns-unknown"]
     }
@@ -64,19 +66,19 @@ bash ./setup.sh
 <br/><br/>
 
 ### 11. Configure the Firewall to send events
-[NGFW Configuration](docs/NGFW/ngfw-configuration.md)
+[NGFW Configuration](https://github.com/PaloAltoNetworks/safe-networking-sp/wiki/NGFW-Configuration)
 <br/><br/>
 ### 12. Start the portal  (make sure you are in the safe-networking-sp directory)
 ```
 source env/bin/activate
-python ./sfn > log/console-\`date '%Y-%m-%d %H:%M:%S'\`.log 2>&1
+python ./sfn >log/console-"$(date +"%Y-%d-%m %H:%M:%S").log" 2>&1
 ```
+#### NOTE: The above two commands is how you will start it from now on.
 <br/><br/>
 ### 13. Kibana setup
 SafeNetworking is now running and processing events.  You will need to perfrom some minor post install setup in Kibana for the visualizations and dashboards.
-[Kibana setup for SafeNetworking](docs/kibana-setup.md)
+[Kibana setup for SafeNetworking](https://github.com/PaloAltoNetworks/safe-networking-sp/wiki/Kibana-post-install-setup)
 
 <br/><br/>
 ## Best Practices and Optional Configuration
 You should be all set.  For even more ideas on what you can do with the system and other things that you can download and install to get the most out of SafeNetworking, checkout the [Wiki](https://github.com/PaloAltoNetworks/safe-networking-sp/wiki)!!
-

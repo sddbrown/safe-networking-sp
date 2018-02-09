@@ -1,4 +1,3 @@
-
 import json
 import time
 import requests
@@ -10,14 +9,11 @@ from project.dns.dns import AFDetailsDoc, TagDetailsDoc, DomainDetailsDoc
 from elasticsearch_dsl import DocType, Search, Date, Integer, Keyword, Text, Ip, connections
 
 
-
-def updateAfStats(afInfo):
+def updateAfStats():
     '''
-    Update the sfn-details af-doc. 
-    If it doesn't exist, the 'upsert' does that for us. 
+    Update the sfn-details af-doc.
+    If it doesn't exist, the 'upsert' does that for us.
     '''
-    # Define a default Elasticsearch client
-    #connections.create_connection(hosts=[app.config['ELASTICSEARCH_HOST']])
     now = datetime.datetime.now()
 
     try:
@@ -25,17 +21,25 @@ def updateAfStats(afInfo):
 
     except NotFoundError as nfe:
         app.logger.info(f"The af-details doc is not found - creating")
-           
-        afDoc = AFDetailsDoc(meta={'id': 'af-details'}, 
+
+        afDoc = AFDetailsDoc(meta={'id': 'af-details'},
                                     minute_points=0,
                                     minute_points_remaining=0,
                                     daily_points=0,
                                     daily_points_remaining=0,
                                     minute_bucket_start=now,
                                     daily_bucket_start=now)
-    
-    
     # The AF Doc should exist by now
+
+
+
+    # Just grab a tag that we know exists so we can get the rolling point total
+    returnData = getTagInfo("WildFireTest")
+    afInfo = returnData['bucket_info']
+
+    app.logger.debug(f"Updating af-details with "
+                     f"{afInfo['daily_points_remaining']} remaining points")
+    # Update the af-details doc in the DB
     afDoc.minute_points=afInfo['minute_points']
     afDoc.minute_points_remaining=afInfo['minute_points_remaining']
     afDoc.daily_points=afInfo['daily_points']
@@ -59,47 +63,47 @@ def getTagInfo(tagName):
     print(searchURL)
     headers = {"Content-Type": "application/json"}
     data = {"apiKey": app.config['AUTOFOCUS_API_KEY']}
-    
+
     # Query AF and get the tag info to be stored in our local ES cache
     app.logger.debug(f'Gathering tag info for {tagName}')
     queryResponse = requests.post(url=searchURL,headers=headers,
                                   data=json.dumps(data))
     queryData = queryResponse.json()
 
-    app.logger.debug(f"getTagInfo() returns: {queryData}")   
+    app.logger.debug(f"getTagInfo() returns: {queryData}")
 
     return queryData
 
 
 
-def processTagList(tagObj):    
+def processTagList(tagObj):
     tagList = list()
     sample = tagObj['_source']
 
-    # If we have tags associated with samples, extract them for each 
+    # If we have tags associated with samples, extract them for each
     # sample and then get their meta-data
     if 'tag' in sample:
         app.logger.debug(f"Found tag(s) {sample['tag']} in sample")
-        
+
         for tagName in sample['tag']:
             app.logger.debug(f"Processing tag {tagName}")
-            
+
             tagData = processTag(tagName)
             tagList.append(tagData)
-            
+
             app.logger.debug(f"Tag data returned from processTag(): {tagData}")
     else:
         tagData = "NULL"
 
     app.logger.debug(f"processTagList() returns: {tagList}")
 
-    return tagList    
+    return tagList
 
 
 
 def processTag(tagName):
     '''
-    Method determines if we have a local tag info cache or we need to go to AF 
+    Method determines if we have a local tag info cache or we need to go to AF
     and gather the info.  Returns the data for manipulation by the calling
     method
     '''
@@ -109,7 +113,7 @@ def processTag(tagName):
     #cacheTimeout = app.config['AF_TAG_INFO_MAX_AGE']
     retStatusFail = f'Failed to get info for {tagName} - FAIL'
     now = datetime.datetime.now().replace(microsecond=0).isoformat(' ')
-    timeLimit = (datetime.datetime.now() - 
+    timeLimit = (datetime.datetime.now() -
                     datetime.timedelta(days=app.config['DOMAIN_TAG_INFO_MAX_AGE']))
 
     app.logger.debug(f"Querying local cache for {tagName}")
@@ -129,18 +133,18 @@ def processTag(tagName):
             app.logger.debug(f"Last updated can't be older than {timeLimit} " +
                              f"and {tagDoc.doc_updated} is not, so don't need" +
                              f" to update cache")
-            
+
 
     except NotFoundError as nfe:
-        app.logger.info(f"No local cache found for tag {tagName}")
+        app.logger.info(f"No local cache found for tag {tagName} - Creating")
         updateDetails = True
         updateType = "Creating"
 
 
-    if updateDetails:  
-        
+    if updateDetails:
+
         afTagData = getTagInfo(tagName)
-        
+
         # If we get the word 'message' in the return it means something went
         # wrong, so just return False
         if "message" not in afTagData:
@@ -151,26 +155,26 @@ def processTag(tagName):
             tagDoc.doc_updated = now
             tagDoc.type_of_doc = "tag-doc"
             tagDoc.processed = 1
-                
-            # Only set the doc_created attribute if we aren't updating 
+
+            # Only set the doc_created attribute if we aren't updating
             if updateType == "Creating":
                 tagDoc.doc_created = now
-            
+
             app.logger.debug(f"tagDoc is {tagDoc.to_dict()} ")
 
             tagDoc.save()
-            
+
             tagDoc = TagDetailsDoc.get(id=tagName)
 
         else:
             return False
-    
+
     app.logger.debug(f"processTag() returns: " +
                      f"{(tagDoc.tag['tag_name'],tagDoc.tag['public_tag_name'],tagDoc.tag['tag_class'])}")
-    
+
     return (tagDoc.tag['tag_name'],tagDoc.tag['public_tag_name'],
             tagDoc.tag['tag_class'])
-    
+
 
 
 def assessTags(tagsObj):
@@ -189,8 +193,8 @@ def assessTags(tagsObj):
     #  Find an actor
     #    Set the tagInfo to this but keep going in case we find a campaign
     #  Find the *first* malware
-    #    Set the tagInfo to this but keep going in case we find a campaign 
-    #      or an actor 
+    #    Set the tagInfo to this but keep going in case we find a campaign
+    #      or an actor
 
 
     for entry in tagsObj:
@@ -200,38 +204,38 @@ def assessTags(tagsObj):
             for tag in entry[2]:
                 tagName = tag[1]
                 tagClass = tag[2]
-                
+
                 app.logger.debug(f"Working on tag {tagName} " +
                                  f"with class of {tagClass}")
-                
+
                 if tagClass == "campaign":
                     tagInfo = {"tag_name":tagName,"public_tag_name":tag[0],
                                "tag_class":tagClass,"sample_date":sampleDate,
-                               "file_type":sampleFileType, 
+                               "file_type":sampleFileType,
                                "confidence_level":90}
                     taggedEvent = True
                     app.logger.debug(f"Tag info for {tagName}: {tagInfo}")
-                    break   # This the grand daddy of all tags 
+                    break   # This the grand daddy of all tags
                             # No need to keep processing the rest
-                    
+
                 elif tagClass == "actor":
                     tagInfo = {"tag_name":tagName,"public_tag_name":tag[0],
                                "tag_class":tagClass,"sample_date":sampleDate,
-                               "file_type":sampleFileType, 
+                               "file_type":sampleFileType,
                                "confidence_level":90}
                     taggedEvent = True
                     app.logger.debug(f"Tag info for {tagName}: {tagInfo}")
 
 
                 elif (tagClass == "malware_family") and not taggedEvent:
-                   
-                    # Figure out the confidence level for the malware based on how 
-                    # many days old it is. 
+
+                    # Figure out the confidence level for the malware based on how
+                    # many days old it is.
                     dateDiff = (datetime.datetime.now() - datetime.datetime.strptime(sampleDate, "%Y-%m-%dT%H:%M:%S"))
-                    
+
                     app.logger.debug(f"Calculating confidence level: " +
                                      f"Day differential of {dateDiff.days}")
-                
+
                     for days in tagConfLevels:
                         if dateDiff.days < int(days):
                             confLevel = tagConfLevels[days]
@@ -251,32 +255,32 @@ def assessTags(tagsObj):
 
                     tagInfo = {"tag_name":tagName,"public_tag_name":tag[0],
                                 "tag_class":tagClass,"sample_date":sampleDate,
-                                "file_type":sampleFileType, 
+                                "file_type":sampleFileType,
                                 "confidence_level":confLevel}
                     taggedEvent = True
                     app.logger.debug(f"Tag info for {tagName}: {tagInfo}")
-                   
-            # Went through all the tags available and none were of interest    
-            if not taggedEvent:    
-                tagInfo = {"tag_name":"Not Available",
-                            "public_tag_name":"Not Available",
-                            "tag_class":"Not Available",
+
+            # Went through all the tags available and none were of interest
+            if not taggedEvent:
+                tagInfo = {"tag_name":"Low Priority Tags",
+                            "public_tag_name":"Low Priority Tags",
+                            "tag_class":"Low Priority Tags",
                             "sample_date":"2000-01-01T00:00:00",
-                            "file_type":"Not Available", 
+                            "file_type":"Low Priority Tags",
                             "confidence_level":0}
                 taggedEvent = True
-            
+
     app.logger.debug(f"assessTags() returns: {tagInfo}")
 
-    return tagInfo  
+    return tagInfo
 
 
 
 def getDomainInfo(threatDomain):
     '''
-    Method that uses user supplied api key (.panrc) and gets back a "cookie."  
-    Loops through timer (in minutes) and checks both the timer value and the 
-    maximum search result percentage and returns the gathered domain data when 
+    Method that uses user supplied api key (.panrc) and gets back a "cookie."
+    Loops through timer (in minutes) and checks both the timer value and the
+    maximum search result percentage and returns the gathered domain data when
     either of those values are triggered
     '''
     apiKey= app.config['AUTOFOCUS_API_KEY']
@@ -286,46 +290,44 @@ def getDomainInfo(threatDomain):
     maxPercentage = app.config["AF_LOOKUP_MAX_PERCENTAGE"]
     resultData = {"apiKey": apiKey}
     headers = {"Content-Type": "application/json"}
-    searchData = {"apiKey": apiKey, 
+    searchData = {"apiKey": apiKey,
                     "query": {
-                        "operator": "all", 
+                        "operator": "all",
                         "children": [{
                             "field":"alias.domain",
                             "operator":"contains",
-                            "value": threatDomain}]}, 
-                    "size": 10, 
+                            "value": threatDomain}]},
+                    "size": 10,
                     "from": 0,
-                    "sort": {"create_date": {"order": "desc"}}, 
-                    "scope": "global", 
+                    "sort": {"create_date": {"order": "desc"}},
+                    "scope": "global",
                     "artifactSource": "af"}
-    
-    # Query AF and it returns a "cookie" that we use to view the resutls of the 
+
+    # Query AF and it returns a "cookie" that we use to view the resutls of the
     # search
     app.logger.debug(f'Gathering domain info for {threatDomain}')
     queryResponse = requests.post(url=searchURL,headers=headers,
                                   data=json.dumps(searchData))
     app.logger.debug(f"Initial AF domain query returned {queryResponse.json()}")
     queryData = queryResponse.json()
-    
+
     if queryData['af_cookie']:
         cookie = queryData['af_cookie']
         cookieURL = resultURL + cookie
-    
+
         app.logger.debug(f"Cookie {cookie} returned for query of {threatDomain}")
 
         # Wait for the alloted time before querying AF for search results.  Do check
-        # every minute anyway, in case the search completed as the cookie is only 
-        # valid for 2 minutes after it completes. 
+        # every minute anyway, in case the search completed as the cookie is only
+        # valid for 2 minutes after it completes.
         for timer in range(lookupTimeout):
             time.sleep(60)
             cookieResults = requests.post(url=cookieURL,headers=headers,
                                         data=json.dumps(resultData))
             domainData = cookieResults.json()
             if domainData['af_complete_percentage'] >= maxPercentage :
-                updateAfStats(domainData['bucket_info'])
                 break
             else:
-                updateAfStats(domainData['bucket_info'])
                 app.logger.info(f"Search completion " +
                                 f"{domainData['af_complete_percentage']}% for " +
                                 f"{threatDomain} at {timer+1} minute(s): " +
@@ -335,7 +337,7 @@ def getDomainInfo(threatDomain):
         app.logger.error(f"Unable to retrieve domain info from AutoFocus. " +
                          f"The AF query returned {queryData}")
 
-    
+
     domainObj = list()
 
     if domainData['total'] !=0:
@@ -344,12 +346,14 @@ def getDomainInfo(threatDomain):
             domainObj.append((hits['_source']['finish_date'],
                              hits['_source']['filetype'],
                              tagList))
-           
+
     else:
         app.logger.debug(f"No samples found for {threatDomain} in time allotted")
-        domainObj.append(('2000-01-01T00:00:00','None',[('Not Available for Domain',
-                         'Not Available for Domain', 'Not Available for Domain')]))
-    
+        domainObj.append(('2000-01-01T00:00:00','None',
+                         [('No Samples Returned for Domain',
+                           'No Samples Returned for Domain',
+                           'No Samples Returned for Domain')]))
+
     app.logger.debug(f"getDomainInfo() returns: {domainObj}")
 
     return domainObj
@@ -358,13 +362,13 @@ def getDomainInfo(threatDomain):
 
 def getDomainDoc(domainName):
     '''
-    Method to get the local domain doc info and return it to the event 
+    Method to get the local domain doc info and return it to the event
     processor so it can update the event with the most recent info
     '''
     domainDoc = "NULL"
     updateDetails = False
     now = datetime.datetime.now().replace(microsecond=0).isoformat(' ')
-    timeLimit = (datetime.datetime.now() - 
+    timeLimit = (datetime.datetime.now() -
                     datetime.timedelta(days=app.config['DNS_DOMAIN_INFO_MAX_AGE']))
 
     app.logger.debug(f"Querying local cache for {domainName}")
@@ -372,7 +376,7 @@ def getDomainDoc(domainName):
 
     try:
         domainDoc = DomainDetailsDoc.get(id=domainName)
-        
+
         # check age of doc and set to update the details
         if timeLimit > domainDoc.doc_updated:
             app.logger.debug(f"Domain last updated can't be older than {timeLimit} " +
@@ -402,7 +406,7 @@ def getDomainDoc(domainName):
             domainDoc.doc_updated = now
             domainDoc.save()
         except Exception as e:
-            app.logger.error(f"Unable to work with domain doc {domainName} - {e}")  
+            app.logger.error(f"Unable to work with domain doc {domainName} - {e}")
             domainDoc = "NULL"
 
     app.logger.debug(f"getDomainDoc() returns: {domainDoc}")
