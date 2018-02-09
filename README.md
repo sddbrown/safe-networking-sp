@@ -1,8 +1,10 @@
-# Read the Setup Instructions if you do not have an ElasticStack cluster (i.e. ElasticCloud or a local install)
+# CURRENT VERSION 2.0.2
+For the latest information and release specific notes view the [release notes](docs/release-notes.md)
+
+## Read the Setup Instructions if you do not have an ElasticStack cluster (i.e. ElasticCloud or a local install)
 [Infrastructure Setup Instructions](https://github.com/PaloAltoNetworks/safe-networking-sp/wiki/Infrastructure-Setup)
 
-
-# Install & start the SafeNetworking Application
+## Install & start the SafeNetworking Application
 ### 1. Clone repo
 ```git clone https://www.github.com/PaloAltoNetworks/safe-networking-sp.git```
 <br/><br/>
