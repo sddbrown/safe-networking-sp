@@ -2,10 +2,12 @@
 Release Date: 09 Feb 2018
 <br/>
 ### New Features
-New Kibana visualizations and Dashboards added for malware viewed by time <br/>
-- import install/kibana/export.json via Kibana if you already have an install<br/>
+1.) New Kibana visualizations and Dashboards added for malware viewed by time
+- If you already have an install:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Setup index-patterns for sfn-domain-details* & sfn-tag-details*<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Import *install/kibana/export.json* via Kibana and select the appropriate index-patterns for the visualizations<br/>
 
-Safenetworking now processes all threat categories with dns in the name (dns, dns-wildfire, etc.)
+2.) Safenetworking now processes all threat categories with dns in the name (dns, dns-wildfire, etc.)
 
 ### Issues resolved
 [Concurrency issue with af-details](https://github.com/PaloAltoNetworks/safe-networking-sp/issues/30)<br/>
