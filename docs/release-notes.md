@@ -1,6 +1,10 @@
 # Version 2.0.2
 Release Date: 09 Feb 2018
 <br/>
+### New Features
+New Kibana visualizations and Dashboards added for malware viewed by time
+Safenetworking now processes all threat categories with dns in the name (dns, dns-wildfire, etc.)
+
 ### Issues resolved
 [Concurrency issue with af-details #30](https://github.com/PaloAltoNetworks/safe-networking-sp/issues/30)<br/>
 [SFN2.0.1 not populating sfn-domain-details index docs](https://github.com/PaloAltoNetworks/safe-networking-sp/issues/62)<br/>
@@ -19,7 +23,7 @@ Release Date: 09 Feb 2018
 [Unassigned shards error](https://github.com/PaloAltoNetworks/safe-networking-sp/issues/32)<br/>
 
 ### Known issues
-- Intermittently, there is a concurrency error that will show up in the sfn.log as an ERROR and it will create subsequent ERROR messages as the system cannot work with the domain details document correctly.  To remedy this, as it *could* slow down performance, delete the domain document in question. Contact the account team or SP-Solutions with help on this matter.
+- Intermittently, there is a domain document concurrency error that will show up in the sfn.log as an ERROR and it will create subsequent ERROR messages as the system cannot work with the domain details document correctly.  To remedy this, as it *could* slow down performance, delete the domain document in question. Contact the account team or SP-Solutions with help on this matter.
 
 <br/><br/><br/><br/>
 
