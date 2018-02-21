@@ -71,7 +71,7 @@ bash ./setup.sh
 ### 12. Start the portal  (make sure you are in the safe-networking-sp directory)
 ```
 source env/bin/activate
-python ./sfn >log/console-$(date +%Y-%d-%m %H:%M:%S).log 2>&1
+python ./sfn >log/console-$(date +%Y-%d-%m-%H:%M:%S).log 2>&1
 ```
 #### NOTE: The above two commands is how you will start it from now on.
 <br/><br/>
