@@ -1,81 +1,21 @@
-# CURRENT VERSION 2.0.2
+# CURRENT VERSION 2.0.3
 For the latest information and release specific notes view the [release notes](docs/release-notes.md)
 
 ## Read the Setup Instructions if you do not have an ElasticStack cluster (i.e. ElasticCloud or a local install)
-[Infrastructure Setup Instructions](https://github.com/PaloAltoNetworks/safe-networking-sp/wiki/Infrastructure-Setup)
+1.) [Infrastructure Setup Instructions](https://github.com/PaloAltoNetworks/safe-networking-sp/wiki/Infrastructure-Setup)
 
-## Install & start the SafeNetworking Application
-### 1. Clone repo
-```git clone https://www.github.com/PaloAltoNetworks/safe-networking-sp.git```
-<br/><br/>
-### 2. Change into repo directory
-```cd safe-networking-sp```
-<br/><br/>
-### 3. Create python 3.6 virtualenv
-```python3.6 -m venv env```
-<br/><br/>
-### 4. Activate virtualenv
-```source env/bin/activate```
-<br/><br/>
-### 5. Download required libraries
-```pip install -r requirements.txt```
-<br/><br/>
-### 6. Deactivate the virutalenv (we will return to it later)
-```deactivate```
-<br/><br/>
-### 7. Configure the .panrc for your installation
-[Configuring SafeNetworking](https://github.com/PaloAltoNetworks/safe-networking-sp/wiki/Default-.panrc-configuration-file)
-<br/><br/>
-### 8. Copy the SafeNetworking logstash configuration files to the logstash config directory
-```
-sudo cp install/logstash/sfn-dns.conf /etc/logstash/conf.d/
-```
-<br/><br/>
-### 9. Edit the /etc/logstash/conf.d/sfn-dns.conf file and replace the "CHANGEME" with your logstash listener and elasticsearch server where appropriate (3 places)
-Example Input and Output stanzas.  Do not delete any of the lines. The filter stanza has been omitted and only sections of the input and output stanzas are show for clarity.
+2.) [Install SafeNetworking](https://github.com/PaloAltoNetworks/safe-networking-sp/wiki/Installing-the-SafeNetworking-Software)
 
-```
-input {
-  http {
-    host => "10.10.10.10"
-    port => '9563'
-...
+3.) [Configure SafeNetworking for your installation](https://github.com/PaloAltoNetworks/safe-networking-sp/wiki/Configuring-SafeNetworking)
 
-output {
-  if "SFN-DNS" in [tags] {
-    elasticsearch {
-      hosts => ["10.10.10.10:9200"]
-      index => ["sfn-dns-event"]
-    }
-    stdout { codec => rubydebug }
-  }
-  else if "_grokparsefailure" in [tags] {
-    elasticsearch {
-      hosts => ["10.10.10.10:9200"]
-      index => ["sfn-dns-unknown"]
-    }
-...
-```
-<br/><br/>
-### 10. Install the index mappings into ElasticSearch
-NOTE: The setup script runs against localhost. If ES is bound to a particular IP address, you will need to edit the file and change it to reflect that.
-```
-cd install
-bash ./setup.sh
-```
+4.) [NGFW Configuration](https://github.com/PaloAltoNetworks/safe-networking-sp/wiki/NGFW-Configuration)
 <br/><br/>
 
-### 11. Configure the Firewall to send events
-[NGFW Configuration](https://github.com/PaloAltoNetworks/safe-networking-sp/wiki/NGFW-Configuration)
-<br/><br/>
-### 12. Start the portal  (make sure you are in the safe-networking-sp directory)
-```
-source env/bin/activate
-python ./sfn >log/console-$(date +%Y-%d-%m-%H:%M:%S).log 2>&1
-```
-#### NOTE: The above two commands is how you will start it from now on.
-<br/><br/>
-### 13. Kibana setup
+5.) [Running SafeNetworking](https://github.com/PaloAltoNetworks/safe-networking-sp/wiki/Running-SafeNetworking-in-the-background)
+
+## Post install and after SafeNetworking is running
+
+#### Kibana setup
 SafeNetworking is now running and processing events.  You will need to perfrom some minor post install setup in Kibana for the visualizations and dashboards.
 [Kibana setup for SafeNetworking](https://github.com/PaloAltoNetworks/safe-networking-sp/wiki/Kibana-post-install-setup)
 
