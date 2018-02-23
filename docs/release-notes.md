@@ -1,3 +1,13 @@
+# Version 2.0.3
+Release Date: 23 Feb 2018
+<br/>
+### New Features
+1.) Start SafeNetworking at system start time automatically
+
+### Issues resolved
+[Breakout large docs into headings with sub-docs](https://github.com/PaloAltoNetworks/safe-networking-sp/issues/71)<br/>
+
+
 # Version 2.0.2
 Release Date: 09 Feb 2018
 <br/>
