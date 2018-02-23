@@ -13,7 +13,7 @@ For the latest information and release specific notes view the [release notes](d
 
 4.) [NGFW Configuration](https://github.com/PaloAltoNetworks/safe-networking-sp/wiki/NGFW-Configuration)
 
-5.) [Running SafeNetworking](https://github.com/PaloAltoNetworks/safe-networking-sp/wiki/Running-SafeNetworking-in-the-background)
+5.) [Running SafeNetworking](https://github.com/PaloAltoNetworks/safe-networking-sp/wiki/Running-SafeNetworking)
 
 <br/>
 
