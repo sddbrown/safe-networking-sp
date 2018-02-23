@@ -6,7 +6,14 @@ Release Date: 23 Feb 2018
 
 ### Issues resolved
 [Breakout large docs into headings with sub-docs](https://github.com/PaloAltoNetworks/safe-networking-sp/issues/71)<br/>
+[Auto startup using supervisor](https://github.com/PaloAltoNetworks/safe-networking-sp/issues/26)<br/>
+[Add contributing guidelines](https://github.com/PaloAltoNetworks/safe-networking-sp/issues/39)<br/>
+[Need issue templates](https://github.com/PaloAltoNetworks/safe-networking-sp/issues/42)<br/>
+[Need pull request templates](https://github.com/PaloAltoNetworks/safe-networking-sp/issues/43)<br/>
+[Startup script](https://github.com/PaloAltoNetworks/safe-networking-sp/issues/22)<br/>
+[setup.sh](https://github.com/PaloAltoNetworks/safe-networking-sp/issues/59)<br/>
 
+<br/><br/>
 
 # Version 2.0.2
 Release Date: 09 Feb 2018
