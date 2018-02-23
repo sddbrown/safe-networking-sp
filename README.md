@@ -1,7 +1,7 @@
 # CURRENT VERSION 2.0.3
 For the latest information and release specific notes view the [release notes](docs/release-notes.md)
 
-SafeNetworking is a software application that recevies events from Palo Alto Networks NGFWs that are based on DNS queries to known, malicious domains.  Using the Palo Alto Networks Threat Intelligence Cloud, SafeNetworking is able to correlate these DNS queries with malware known to be associated with the domain in question.  SafeNetworking utilizes ElasticStack's open-source version to gather, store and visualize these enriched events.   
+SafeNetworking is a software application that recevies events (DNS queries to known, malicious domains) from Palo Alto Networks NGFWs.  Using the Palo Alto Networks Threat Intelligence Cloud, SafeNetworking is able to correlate these DNS queries with malware known to be associated with the domain in question.  SafeNetworking utilizes ElasticStack's open-source version to gather, store and visualize these enriched events.   
 
 #### NOTE: If you already have an ElasticStack cluster (i.e. ElasticCloud or a local install) skip to step 2
 1.) [Infrastructure Setup Instructions](https://github.com/PaloAltoNetworks/safe-networking-sp/wiki/Infrastructure-Setup)
