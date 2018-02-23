@@ -30,7 +30,7 @@ The following is a set of guidelines for contributing to SafeNetworking, which i
 
 ## Code of Conduct
 
-This project and everyone participating in it is governed by the [SafeNetworking Code of Conduct](docs/CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code. Please report unacceptable behavior to the [SP-Solutions](mailto:sp-solutions@paloaltonetworks.com) team.
+This project and everyone participating in it is governed by the [SafeNetworking Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code. Please report unacceptable behavior to the [SP-Solutions](mailto:sp-solutions@paloaltonetworks.com) team.
 
 ## I don't want to read this whole thing I just have a question!!!
 
