@@ -109,6 +109,7 @@ scratch
 instance/.panrc
 project/.panrc
 .panrc
+install/sfn/sfn.sh
 
 # Node + npm Stuff
 node_modules/
