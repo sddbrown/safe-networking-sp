@@ -37,4 +37,3 @@ sudo systemctl daemon-reload
 sudo systemctl enable sfn.service
 sudo systemctl start sfn.service
 sudo systemctl status sfn.service
-~
