@@ -19,7 +19,7 @@ app = Flask(__name__)
 # ---------- APPLICATION SETTINGS --------------
 #
 # Current version number of SafeNetworking
-app.config['VERSION'] = "2.0.2"
+app.config['VERSION'] = "2.0.3"
 #
 # When set to True, this slows down the logging by only processing 1 event at a
 # time and allows us to see what is going on if there are bugs
