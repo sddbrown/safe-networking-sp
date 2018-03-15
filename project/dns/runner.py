@@ -74,25 +74,25 @@ def processDNS():
 
     # If we aren't in DEBUG mode (.panrc setting)
     if not app.config['DEBUG_MODE']:
-        '''
-        pool.map will take any iterable but it changes it to a list,
-        so in our case, the keys get pulled and sent as a list.  This is a
-        bummer because the searchDomain is going to have to do the same
-        lookup (that we just fricken did) to find the domain name.  Need to
-        find a better way to do this to prevent more lookups.
-        '''
+
+        # Set the number of multi processes to use and cap it at 16 so
+	    # so we don't blow out the minute points on AutoFocus
+        multiProcNum = app.config['DNS_POOL_COUNT'] if app.config['DNS_POOL_COUNT'] <= 16 else 16
+
         # Multiprocess the primary keys
-        with Pool(cpu_count() * 4) as pool:
+        app.logger.debug(f"Running pri-keys through on {multiProcNum} processes")
+        with Pool(multiProcNum) as pool:
             results = pool.map(searchDomain, priDocIds)
 
-        updateAfStats()
+        #updateAfStats()
         app.logger.debug(f"Results for processing primary events {results}")
 
         # Do the same with the generic/secondary keys and pace so we don't kill AF
-        with Pool(cpu_count() * 4) as pool:
+        app.logger.debug(f"Running sec-keys through on {multiProcNum} processes")
+        with Pool(multiProcNum) as pool:
             results = pool.map(searchDomain, secDocIds)
 
-        updateAfStats()
+        #updateAfStats()
         app.logger.debug(f"Results for processing AF lookup events {results}")
 
     # This else gets triggered so we only do one document at a time and is for

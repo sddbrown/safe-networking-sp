@@ -7,6 +7,27 @@ from flask_bootstrap import Bootstrap
 from flask_elasticsearch import Elasticsearch
 from logging.handlers import RotatingFileHandler
 
+class SFNFormatter(logging.Formatter):
+    width = 40
+    datefmt='%Y-%m-%d %H:%M:%S'
+
+    def format(self, record):
+        cpath = f'{record.module}:{record.funcName}:[{record.lineno}]:{record.thread}'
+        cpath = cpath[-self.width:].ljust(self.width)
+        #record.message = record.getMessage()
+        levelName = f"[{record.levelname}]"
+        outputString = f"{levelName:<10}: {self.formatTime(record, self.datefmt)} : {cpath} : {record.getMessage()}"
+                       #%s : %s" % (record.levelname, self.formatTime(record, self.datefmt), cpath, record.getMessage())
+        if record.exc_info:
+            # Cache the traceback text to avoid converting it multiple times
+            if not record.exc_text:
+                record.exc_text = self.formatException(record.exc_info)
+        if record.exc_text:
+            if outputString[-1:] != "\n":
+                outputString = outputString + "\n"
+            outputString = outputString + record.exc_text
+        return outputString
+
 
 # Initialize the app for Flask
 app = Flask(__name__)
@@ -37,8 +58,18 @@ app.config['BASE_DIR'] = os.path.abspath(os.path.dirname(__file__))
 # Set the number of seconds for multi-threading to wait between processing calls
 app.config['POOL_TIME'] = 10
 #
-# Set the number of seconds - what the hell is this for?
-#app.config['SEC_PROCESS_POOL_TIME'] = 300
+# Set the number of processes to run the DNS module.  This cannot be more than
+# 16 or it will kill the AF minute points.  The code will  take care of cases
+# where it is greater than 16 and this should only be adjusted down (never up).
+# Remember that DNS_POOL_COUNT and URL_POOL_COUNT have to share the total of 16.
+# The application will check and throw an error (but it will still run) if the
+# two settings together is more than 16.
+app.config['DNS_POOL_COUNT'] = 16
+#
+# Set the number of processes to run the URL module.  This cannot be more than
+# 16 or it will kill the AF minute points.  The code will  take care of cases
+# where it is greater than 16 and this should only be adjusted down (never up)
+app.config['URL_POOL_COUNT'] = 0
 #
 # When SafeNetworking is started, number of documents to read from the DB.  The
 # larger the number, the longer this will take to catch up.
@@ -126,9 +157,9 @@ es = Elasticsearch(f"{app.config['ELASTICSEARCH_HOST']}:{app.config['ELASTICSEAR
 handler = RotatingFileHandler('log/sfn.log',
                             maxBytes=app.config['LOG_SIZE'],
                             backupCount=app.config['LOG_BACKUPS'])
-logFormat = logging.Formatter('%(asctime)s - %(module)s:%(funcName)s[%(lineno)i] - %(thread)d - [%(levelname)s] -- %(message)s')
+sfnFormatter = SFNFormatter()
 handler.setLevel(app.config["LOG_LEVEL"])
-handler.setFormatter(logFormat)
+handler.setFormatter(sfnFormatter)
 app.logger.addHandler(handler)
 app.logger.info(f"INIT - SafeNetworking application initializing with log level of {app.config['LOG_LEVEL']}")
 app.logger.info(f"ElasticSearch host is: {app.config['ELASTICSEARCH_HOST']}:{app.config['ELASTICSEARCH_PORT']}")
