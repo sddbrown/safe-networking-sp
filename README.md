@@ -1,6 +1,7 @@
-# CURRENT VERSION 2.0.3
+# CURRENT VERSION 2.1 - DEVELOPMENT
+### If you see the DEVELOPMENT README, you are not looking at the GA version of this code.  Use the branch selector to see the master (GA) branch
 
-SafeNetworking is a software application that recevies events (DNS queries to known, malicious domains) from Palo Alto Networks NGFWs.  Using the Palo Alto Networks Threat Intelligence Cloud, SafeNetworking is able to correlate these DNS queries with malware known to be associated with the domain in question.  SafeNetworking utilizes ElasticStack's open-source version to gather, store and visualize these enriched events.   
+SafeNetworking is a software application that recevies events (DNS queries to known, malicious domains) from Palo Alto Networks NGFWs.  Using the Palo Alto Networks Threat Intelligence Cloud, SafeNetworking is able to correlate these DNS queries with malware known to be associated with the domain in question.  SafeNetworking utilizes ElasticStack's open-source version to gather, store and visualize these enriched events.
 
 For the latest information and release specific notes view the [release notes](docs/release-notes.md)
 
@@ -17,7 +18,7 @@ For the latest information and release specific notes view the [release notes](d
 
 <br/>
 
-## Post install 
+## Post install
 SafeNetworking should now be running and processing events.  You will need to perfrom some minor post install setup in Kibana for the visualizations and dashboards.
 [Kibana setup for SafeNetworking](https://github.com/PaloAltoNetworks/safe-networking-sp/wiki/Kibana-post-install-setup)
 
