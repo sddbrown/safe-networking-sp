@@ -16,8 +16,10 @@ class SFNFormatter(logging.Formatter):
         cpath = cpath[-self.width:].ljust(self.width)
         #record.message = record.getMessage()
         levelName = f"[{record.levelname}]"
-        outputString = f"{levelName:<10}: {self.formatTime(record, self.datefmt)} : {cpath} : {record.getMessage()}"
-                       #%s : %s" % (record.levelname, self.formatTime(record, self.datefmt), cpath, record.getMessage())
+        outputString = (f"{levelName:<10}: "
+                       f"{self.formatTime(record, self.datefmt)} : {cpath} : "
+                       f"{record.getMessage()}")
+
         if record.exc_info:
             # Cache the traceback text to avoid converting it multiple times
             if not record.exc_text:
@@ -132,6 +134,15 @@ app.config['ELASTICSEARCH_HTTP_AUTH'] = ""
 app.config['KIBANA_HOST'] = "localhost"
 app.config['KIBANA_PORT'] = "5601"
 app.config['ELASTICSTACK_VERSION'] = "6.1.1"
+#
+#
+#
+# ------------------------------ FLASK -----------------------------------------
+#
+# By default Flask listens to all ports - we will only listen to localhost
+# for security reasons, but keep the default port of 5000
+app.config['FLASK_HOST'] = "localhost"
+app.config['FLASK_PORT'] = 5000
 #
 #
 #
