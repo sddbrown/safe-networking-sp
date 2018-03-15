@@ -28,7 +28,7 @@ def activate_job():
         while True:
             app.logger.debug("Processing new DNS events")
             processDNS()
-            #time.sleep(app.config["POOL_TIME"])
+            time.sleep(app.config["POOL_TIME"])
 
     def runIoT():
         '''
@@ -62,23 +62,27 @@ def initBackgroundProcs():
     # to mess up the AF per minutes point system (must be less than 16)
     totalProcCount = app.config['DNS_POOL_COUNT'] + app.config['URL_POOL_COUNT']
     if totalProcCount <= 16:
-        app.logger.info(f"Starting with total proc count of {totalProcCount}")
+        app.logger.info(f"INIT - Starting with total proc count of "
+                        f"{totalProcCount}")
     else:
-        app.logger.critical(f"Application may not run correctly with proc "
+        app.logger.critical(f"INIT - Application may not run correctly with proc "
                             f"count of {totalProcCount} - you have been warned")
-    time.sleep(10)
+
     def initProcs():
         not_started = True
-        app.logger.info("Initializing Background Processes")
+        app.logger.info(f"INIT - Initializing Background Processes")
 
         while not_started:
+            flaskHost = app.config['FLASK_HOST']
+            flaskPort = app.config['FLASK_PORT']
             try:
-                req = requests.get('http://127.0.0.1:5000/')
+                req = requests.get(f'http://{flaskHost}:{flaskPort}/')
                 if req.status_code == 200:
-                    #app.logger.info('\nSafeNetworking server started')
+                    app.logger.info(f"INIT - SafeNetworking server started @ "
+                                    f"{flaskHost}:{flaskPort}")
                     not_started = False
             except:
-                app.logger.info('Server not yet started')
+                app.logger.info(f"INIT - Server not yet started")
                 time.sleep(2)
 
     thread = threading.Thread(target=initProcs)
@@ -89,5 +93,5 @@ from project.views import *
 
 if __name__ == '__main__':
     initBackgroundProcs()
-    app.logger.info('Background processes initialized')
-    app.run(host="0.0.0.0")
+    app.logger.info(f"INIT - Background processes initialized")
+    app.run(host=app.config['FLASK_HOST'],port=app.config['FLASK_PORT'])
