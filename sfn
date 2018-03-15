@@ -58,6 +58,15 @@ def initBackgroundProcs():
         app.logger.critical("API Key for Autofocus is not set in .panrc, exiting")
         exit()
 
+    # Check to make sure the config settings for multi-processing is not going
+    # to mess up the AF per minutes point system (must be less than 16)
+    totalProcCount = app.config['DNS_POOL_COUNT'] + app.config['URL_POOL_COUNT']
+    if totalProcCount <= 16:
+        app.logger.info(f"Starting with total proc count of {totalProcCount}")
+    else:
+        app.logger.critical(f"Application may not run correctly with proc "
+                            f"count of {totalProcCount} - you have been warned")
+    time.sleep(10)
     def initProcs():
         not_started = True
         app.logger.info("Initializing Background Processes")
@@ -69,7 +78,7 @@ def initBackgroundProcs():
                     #app.logger.info('\nSafeNetworking server started')
                     not_started = False
             except:
-                app.logger.info('\nServer not yet started')
+                app.logger.info('Server not yet started')
                 time.sleep(2)
 
     thread = threading.Thread(target=initProcs)
