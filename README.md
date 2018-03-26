@@ -1,3 +1,4 @@
+![GitHub release](https://img.shields.io/github/release/PaloAltoNetworks/safe-networking-sp.svg?style=flat-square)
 # CURRENT VERSION 2.1 - DEVELOPMENT
 ### If you see the DEVELOPMENT README, you are not looking at the GA version of this code.  Use the branch selector to see the master (GA) branch
 
