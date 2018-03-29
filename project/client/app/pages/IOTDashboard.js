@@ -2,6 +2,6 @@ import React, { Component } from "react";
 
 export default class IOTDashboard extends Component {
   render() {
-    return <iframe src="http://www.nhl.com" />;
+    return <iframe src="" />;
   }
 }

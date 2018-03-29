@@ -12,6 +12,7 @@ import requests
 import threading
 from project import app
 from project.dns.runner import processDNS
+from project.dns.dnsutils import updateAfStats
 
 
 # This decorator gets kicked off the first time a request is made to the
@@ -26,9 +27,9 @@ def activate_job():
         AF, do lookups, etc.
         '''
         while True:
-            app.logger.debug("Processing new DNS events")
+            app.logger.debug(f"Processing new DNS events")
             processDNS()
-            time.sleep(app.config["POOL_TIME"])
+            time.sleep(app.config["DNS_POOL_TIME"])
 
     def runIoT():
         '''
@@ -36,7 +37,26 @@ def activate_job():
         Searches for any unprocessed sfn-iot documents and
         then sends a call to the iot handler to process them.
         '''
+        app.logger.debug(f"Processing new IoT Events")
         pass
+
+    def runURL():
+        '''
+        DOES NOTHING AS OF NOW - but will do this eventually:
+        Searches for any unprocessed sfn-url documents and
+        then sends a call to the url handler to process them.
+        '''
+        app.logger.debug(f"Processing new URL Events")
+        pass
+
+    def runAfPoints():
+        '''
+        Gets the AutoFocus points total at the given interval of AF_POOL_TIME
+        '''
+        while True:
+            app.logger.debug("Querying AutoFocus for point totals")
+            updateAfStats()
+            time.sleep(app.config["AF_POOL_TIME"])
 
     # Start the DNS processing routines
     threadDNS = threading.Thread(target=runDNS)
@@ -44,6 +64,12 @@ def activate_job():
     # Start the IoT processing routines
     threadIoT = threading.Thread(target=runIoT)
     threadIoT.start()
+     # Start the URL processing routines
+    threadURL = threading.Thread(target=runURL)
+    threadURL.start()
+     # Start the IoT processing routines
+    threadAF = threading.Thread(target=runAfPoints)
+    threadAF.start()
 
 
 def initBackgroundProcs():
