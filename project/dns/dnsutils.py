@@ -86,6 +86,8 @@ def checkAfPoints(bucketInfo):
                         f"point total is {pointsRemaining}")
         app.config['AF_POINTS_MODE'] = True
     else:
+        # We probably hit a "minute points exceeded" so just wait for a minute
+        time.sleep(60)
         # This resets it back to False if the AF points automatically reset
         app.logger.debug(f"Regular exec since daily point total is "
                          f" {pointsRemaining}")
