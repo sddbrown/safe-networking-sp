@@ -46,7 +46,7 @@ app.config['VERSION'] = "2.0.3"
 #
 # When set to True, this slows down the logging by only processing 1 event at a
 # time and allows us to see what is going on if there are bugs
-app.config['DEBUG_MODE'] = False
+app.config['DEBUG_MODE'] = True
 #
 # Flask setting for where session manager contains the info on the session(s)
 app.config['SESSION_TYPE'] = "filesystem"
@@ -59,6 +59,23 @@ app.config['BASE_DIR'] = os.path.abspath(os.path.dirname(__file__))
 #
 # Set the number of seconds for multi-threading to wait between processing calls
 app.config['POOL_TIME'] = 10
+#
+# This is an internal flag that will probably never show up in the .panrc file
+# It is used to slow execution when it is True
+app.config['AF_POINTS_MODE'] = False
+#
+# Number of AF points left to slow down processing so we don't run out of points
+# When it reaches this point, it sets the AF_POINTS_MODE to True and it slows
+# execution to 1 event at a time.
+app.config['AF_POINTS_LOW'] = 5000
+#
+# Number of AF points left to stop processing all together
+app.config['AF_POINT_NOEXEC'] = 500
+#
+# Number of seconds to wait when AF_POINT_NOEXEC gets triggered.  This stops all
+# app execution and checks the AF points total at the specified interval.  When
+# the points total is higher than AF_POINT_NOEXEC it resumes execution.
+app.config['AF_NOEXEC_CKTIME'] = 3600
 #
 # Set the number of processes to run the DNS module.  This cannot be more than
 # 16 or it will kill the AF minute points.  The code will  take care of cases

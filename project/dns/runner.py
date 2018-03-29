@@ -73,7 +73,7 @@ def processDNS():
 
 
     # If we aren't in DEBUG mode (.panrc setting)
-    if not app.config['DEBUG_MODE']:
+    if not (app.config['DEBUG_MODE']) or (app.config['AF_POINTS_MODE']):
 
         # Set the number of multi processes to use and cap it at 16 so
 	    # so we don't blow out the minute points on AutoFocus
@@ -84,7 +84,7 @@ def processDNS():
         with Pool(multiProcNum) as pool:
             results = pool.map(searchDomain, priDocIds)
 
-        #updateAfStats()
+        updateAfStats()
         app.logger.debug(f"Results for processing primary events {results}")
 
         # Do the same with the generic/secondary keys and pace so we don't kill AF
@@ -92,12 +92,12 @@ def processDNS():
         with Pool(multiProcNum) as pool:
             results = pool.map(searchDomain, secDocIds)
 
-        #updateAfStats()
+        updateAfStats()
         app.logger.debug(f"Results for processing AF lookup events {results}")
 
     # This else gets triggered so we only do one document at a time and is for
     # debugging at a pace that doesn't overload the logs. Load the secondary
-    # docs as well, in case we run out of primary while debugging
+    # docs as well, in case we run out of primary while debugging.
     else:
         for document in priDocIds:
             try:
@@ -136,9 +136,8 @@ def searchDomain(eventID):
                                f" of problem with domain doc {domainName}")
         else:
             app.logger.debug(f"Assessing tags for domain-doc {domainDoc.name}")
-
             #  Set dummy info if no tags were found
-            if "2000-01-01T00:00:00" in str(domainDoc.tags):
+            if (domainDoc.tags == None) or ("2000-01-01T00:00:00" in str(domainDoc.tags)):
                 eventTag = {'tag_name': 'No tags found for domain',
                             'public_tag_name': 'No tags found for domain',
                             'tag_class': 'No tags found for domain',
