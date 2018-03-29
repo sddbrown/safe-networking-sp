@@ -42,11 +42,11 @@ app = Flask(__name__)
 # ---------- APPLICATION SETTINGS --------------
 #
 # Current version number of SafeNetworking
-app.config['VERSION'] = "2.0.3"
+app.config['VERSION'] = "2.1-dev"
 #
 # When set to True, this slows down the logging by only processing 1 event at a
 # time and allows us to see what is going on if there are bugs
-app.config['DEBUG_MODE'] = True
+app.config['DEBUG_MODE'] = False
 #
 # Flask setting for where session manager contains the info on the session(s)
 app.config['SESSION_TYPE'] = "filesystem"
