@@ -84,7 +84,7 @@ def processDNS():
         with Pool(multiProcNum) as pool:
             results = pool.map(searchDomain, priDocIds)
 
-        updateAfStats()
+        #updateAfStats()
         app.logger.debug(f"Results for processing primary events {results}")
 
         # Do the same with the generic/secondary keys and pace so we don't kill AF
@@ -92,7 +92,7 @@ def processDNS():
         with Pool(multiProcNum) as pool:
             results = pool.map(searchDomain, secDocIds)
 
-        updateAfStats()
+        #updateAfStats()
         app.logger.debug(f"Results for processing AF lookup events {results}")
 
     # This else gets triggered so we only do one document at a time and is for

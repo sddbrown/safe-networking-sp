@@ -365,16 +365,16 @@ def getDomainInfo(threatDomain):
             app.logger.error(f"We have exceeded the daily allotment of points "
                              f"for AutoFocus - going into hibernation mode.")
             checkAfPoints(queryData['bucket_info'])
-        # The checkAfPoints will eventually return after the points reset.
-        # When they do, reurn the AF query so we don't lose it.
-        app.logger.debug(f'Gathering domain info for {threatDomain}')
-        queryResponse = requests.post(url=searchURL,headers=headers,
-                                  data=json.dumps(searchData))
-        app.logger.debug(f"Initial AF domain query returned "
-                         f"{queryResponse.json()}")
-        queryData = queryResponse.json()
-    else:
-        app.logger.error(f"Return from AutoFocus is in error: {queryData}")
+            # The checkAfPoints will eventually return after the points reset.
+            # When they do, reurn the AF query so we don't lose it.
+            app.logger.debug(f'Gathering domain info for {threatDomain}')
+            queryResponse = requests.post(url=searchURL,headers=headers,
+                                    data=json.dumps(searchData))
+            app.logger.debug(f"Initial AF domain query returned "
+                            f"{queryResponse.json()}")
+            queryData = queryResponse.json()
+        else:
+            app.logger.error(f"Return from AutoFocus is in error: {queryData}")
 
     # Query should return an af_cookie or an error
     if 'af_cookie' in queryData:
