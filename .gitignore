@@ -110,6 +110,7 @@ instance/.panrc
 project/.panrc
 .panrc
 install/sfn/sfn.sh
+project/utils/udc*
 
 # Node + npm Stuff
 node_modules/
