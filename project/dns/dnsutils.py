@@ -470,9 +470,13 @@ def getDomainDoc(domainName):
             afDomainData = getDomainInfo(domainName)
             domainDoc = DomainDetailsDoc(meta={'id': domainName},name=domainName)
             domainDoc.tags = afDomainData
-            domainDoc.doc_created = now
             domainDoc.doc_updated = now
+            # Don't mess with the doc_created field if we are updating
+            if "Creating" in updateType:
+                domainDoc.doc_created = now
+
             domainDoc.save()
+
         except Exception as e:
             app.logger.error(f"Unable to work with domain doc {domainName} - {e}")
             domainDoc = "NULL"
