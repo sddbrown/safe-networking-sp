@@ -1,3 +1,4 @@
+### This is the development branch of SafeNetworking.  It is suggest that you use the [latest release](https://github.com/PaloAltoNetworks/safe-networking-sp/releases) unless you know what you are doing with the develop release
 ![GitHub release](https://img.shields.io/github/release/PaloAltoNetworks/safe-networking-sp.svg?style=for-the-badge)
 ![GitHub repo size in bytes](https://img.shields.io/github/repo-size/PaloAltoNetworks/safe-networking-sp.svg?style=for-the-badge)
 
