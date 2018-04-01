@@ -31,8 +31,6 @@ def updateAfStats():
                                     daily_bucket_start=now)
     # The AF Doc should exist by now
 
-
-
     # Just grab a tag that we know exists so we can get the rolling point total
     returnData = getTagInfo("WildFireTest")
     afInfo = returnData['bucket_info']
@@ -48,6 +46,53 @@ def updateAfStats():
     afDoc.daily_bucket_start=afInfo['daily_bucket_start']
     afDoc.save()
 
+
+def checkAfPoints(bucketInfo):
+    '''
+    Check to verify that the point totals for AF are not being sucked dry.  This
+    function compares the current point total vs the configured lower limit
+    using the AF_POINT_LOW and the AF_POINT_NOEXEC config parameters in the app
+    or user limit set in .panrc file.  AF_POINT_LOW slows down execution of
+    queries to AF, AF_POINT_NOEXEC stops execution for a period of time -
+    AF_NOEXEC_CKTIME.
+    '''
+
+    pointsRemaining = bucketInfo['daily_points_remaining']
+    noExecPoints = app.config['AF_POINT_NOEXEC']
+    afPointLow = app.config['AF_POINTS_LOW']
+    afNoExecTime = app.config['AF_NOEXEC_CKTIME']
+
+    app.logger.debug(f"AF_POINTS SYSTEM settings: AF_POINT_NOEXEC: "
+                     f"{noExecPoints}, AF_POINTS_LOW: {afPointLow}, "
+                     f"AF_NOEXEC_CKTIME: {afNoExecTime}")
+
+    # Check the points total against the AF_POINT_NOEXEC config parameter and
+    # go into sleep mode for AF_NOEXEC_CKTIME to stop processing.
+    if pointsRemaining <= noExecPoints:
+        resetFlag = True
+        while resetFlag:
+            app.logger.info(f"Sleeping for {afNoExecTime} seconds because daily"
+                            f" point total is {pointsRemaining}")
+            time.sleep(afNoExecTime)
+            newBucketInfo = getTagInfo("WildFireTest")
+            if newBucketInfo['bucket_info']['daily_points_remaining'] > noExecPoints:
+                resetFlag = False
+
+    elif pointsRemaining < afPointLow:
+        # Check the points against the configured low water mark.  If it's too
+        # low set app config setting AF_POINTS_MODE to True - which will slow
+        # down the processing to 1 event at a time.
+        app.logger.info(f"Slowing down execution because daily "
+                        f"point total is {pointsRemaining}")
+        app.config['AF_POINTS_MODE'] = True
+    else:
+        # We probably hit a "minute points exceeded" so just wait for a minute
+        # and then we continue execution
+        time.sleep(60)
+        # This resets it back to False if the AF points automatically reset
+        app.logger.debug(f"Regular exec since daily point total is "
+                         f" {pointsRemaining}")
+        app.config['AF_POINTS_MODE'] = False
 
 
 def getTagInfo(tagName):
@@ -283,6 +328,11 @@ def getDomainInfo(threatDomain):
     maximum search result percentage and returns the gathered domain data when
     either of those values are triggered
     '''
+    domainObj = list()
+    domainObj.append(('2000-01-01T00:00:00','None',
+                      [('No Samples Returned for Domain',
+                        'No Samples Returned for Domain',
+                        'No Samples Returned for Domain')]))
     apiKey= app.config['AUTOFOCUS_API_KEY']
     searchURL = app.config["AUTOFOCUS_SEARCH_URL"]
     resultURL = app.config["AUTOFOCUS_RESULTS_URL"]
@@ -311,15 +361,34 @@ def getDomainInfo(threatDomain):
     app.logger.debug(f"Initial AF domain query returned {queryResponse.json()}")
     queryData = queryResponse.json()
 
-    if queryData['af_cookie']:
+    # If the response has a message in it, it most likely means we ran out of
+    # AF points.
+    if 'message' in queryData:
+        if "Bucket Exceeded" in queryData['message']:
+            app.logger.error(f"We have exceeded the daily allotment of points "
+                             f"for AutoFocus - going into hibernation mode.")
+            checkAfPoints(queryData['bucket_info'])
+            # The checkAfPoints will eventually return after the points reset.
+            # When they do, reurn the AF query so we don't lose it.
+            app.logger.debug(f'Gathering domain info for {threatDomain}')
+            queryResponse = requests.post(url=searchURL,headers=headers,
+                                    data=json.dumps(searchData))
+            app.logger.debug(f"Initial AF domain query returned "
+                            f"{queryResponse.json()}")
+            queryData = queryResponse.json()
+        else:
+            app.logger.error(f"Return from AutoFocus is in error: {queryData}")
+
+    # Query should return an af_cookie or an error
+    if 'af_cookie' in queryData:
         cookie = queryData['af_cookie']
         cookieURL = resultURL + cookie
 
         app.logger.debug(f"Cookie {cookie} returned for query of {threatDomain}")
 
-        # Wait for the alloted time before querying AF for search results.  Do check
-        # every minute anyway, in case the search completed as the cookie is only
-        # valid for 2 minutes after it completes.
+        # Wait for the alloted time before querying AF for search results.  Do
+        # check every minute anyway, in case the search completed as the cookie
+        # is only valid for 2 minutes after it completes.
         for timer in range(lookupTimeout):
             time.sleep(60)
             cookieResults = requests.post(url=cookieURL,headers=headers,
@@ -333,26 +402,24 @@ def getDomainInfo(threatDomain):
                                 f"{threatDomain} at {timer+1} minute(s): " +
                                 f"{domainData}")
 
+        if domainData['total'] !=0:
+            for hits in domainData['hits']:
+                tagList = processTagList(hits)
+                # reset domainObj to empty then add the returned tagList
+                domainObj = list()
+                domainObj.append((hits['_source']['finish_date'],
+                                hits['_source']['filetype'],
+                                tagList))
+
+        else:
+            app.logger.info(f"No samples found for {threatDomain} in time "
+                             f"allotted")
+
+
     else:
-        app.logger.error(f"Unable to retrieve domain info from AutoFocus. " +
+        app.logger.error(f"Unable to retrieve domain info from AutoFocus. "
                          f"The AF query returned {queryData}")
 
-
-    domainObj = list()
-
-    if domainData['total'] !=0:
-        for hits in domainData['hits']:
-            tagList = processTagList(hits)
-            domainObj.append((hits['_source']['finish_date'],
-                             hits['_source']['filetype'],
-                             tagList))
-
-    else:
-        app.logger.debug(f"No samples found for {threatDomain} in time allotted")
-        domainObj.append(('2000-01-01T00:00:00','None',
-                         [('No Samples Returned for Domain',
-                           'No Samples Returned for Domain',
-                           'No Samples Returned for Domain')]))
 
     app.logger.debug(f"getDomainInfo() returns: {domainObj}")
 
@@ -379,15 +446,16 @@ def getDomainDoc(domainName):
 
         # check age of doc and set to update the details
         if timeLimit > domainDoc.doc_updated:
-            app.logger.debug(f"Domain last updated can't be older than {timeLimit} " +
-                             f"but it is {domainDoc.doc_updated} and we need to " +
-                             f"update cache")
+            app.logger.debug(f"Domain last updated can't be older than "
+                             f"{timeLimit} but the doc was last updated "
+                             f" {domainDoc.doc_updated} so cache should be "
+                             f"updated")
             updateDetails = True
             updateType = "Updating"
         else:
-            app.logger.debug(f"Domain last updated can't be older than {timeLimit} " +
-                             f"and {domainDoc.doc_updated} is not, so don't need" +
-                             f" to update cache")
+            app.logger.debug(f"Domain last updated can't be older than "
+                             f"{timeLimit} and {domainDoc.doc_updated} is not, "
+                             f"so don't need to update cache")
 
     except NotFoundError as nfe:
         app.logger.info(f"No local cache doc found for domain {domainName}")
@@ -397,14 +465,18 @@ def getDomainDoc(domainName):
 
     # Either we don't have it or we determined that it's too old
     if updateDetails:
-        app.logger.info(f"Making new doc for domain {domainName}")
+        app.logger.info(f"{updateType} domain doc for domain {domainName}")
         try:
             afDomainData = getDomainInfo(domainName)
             domainDoc = DomainDetailsDoc(meta={'id': domainName},name=domainName)
             domainDoc.tags = afDomainData
-            domainDoc.doc_created = now
             domainDoc.doc_updated = now
+            # Don't mess with the doc_created field if we are updating
+            if "Creating" in updateType:
+                domainDoc.doc_created = now
+
             domainDoc.save()
+
         except Exception as e:
             app.logger.error(f"Unable to work with domain doc {domainName} - {e}")
             domainDoc = "NULL"

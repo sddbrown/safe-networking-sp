@@ -8,7 +8,7 @@ curl -XPUT -H'Content-Type: application/json' 'http://localhost:9200/sfn-domain-
 curl -XPUT -H'Content-Type: application/json' 'http://localhost:9200/sfn-tag-details/' -d @elasticsearch/sfn-tag-details.json
 curl -XPUT -H'Content-Type: application/json' 'localhost:9200/_settings' -d '{"index" : {"number_of_replicas" : 0}}'
 
-echo "\n"
+echo ""
 
 # This sets up the automatic startup of SFN if the system reboots.  It also gives
 # the ability to control SafeNetworking as a service using the systemctl and
@@ -21,20 +21,19 @@ echo "#!/bin/sh -" >$START_FILE
 echo "# SafeNetworking startup file" >>$START_FILE
 echo "cd $INSTALL_DIR" >>$START_FILE
 echo "$INSTALL_DIR/env/bin/python $INSTALL_DIR/sfn" >>$START_FILE
-echo "\n"
+echo ""
 echo "Moving startup file to /usr/local/bin -->"
 echo "...."
 sudo cp $START_FILE /usr/local/bin/sfn.sh
 sudo chmod 755 /usr/local/bin/sfn.sh
-echo "\n"
+echo ""
 echo "Copying sfn.service to /etc/systemd/system -->"
 echo "...."
 sudo cp $INSTALL_DIR/install/sfn/sfn.service /etc/systemd/system/sfn.service
-echo "\n"
+echo ""
 sudo chmod 644 /etc/systemd/system/sfn.service
 echo "Enabling and starting the SafeNetworking Service - this may take a minute"
 sudo systemctl daemon-reload
 sudo systemctl enable sfn.service
 sudo systemctl start sfn.service
 sudo systemctl status sfn.service
-~

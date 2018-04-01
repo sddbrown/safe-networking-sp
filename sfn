@@ -12,6 +12,7 @@ import requests
 import threading
 from project import app
 from project.dns.runner import processDNS
+from project.dns.dnsutils import updateAfStats
 
 
 # This decorator gets kicked off the first time a request is made to the
@@ -26,9 +27,9 @@ def activate_job():
         AF, do lookups, etc.
         '''
         while True:
-            app.logger.debug("Processing new DNS events")
+            app.logger.debug(f"Processing new DNS events")
             processDNS()
-            #time.sleep(app.config["POOL_TIME"])
+            time.sleep(app.config["DNS_POOL_TIME"])
 
     def runIoT():
         '''
@@ -36,7 +37,26 @@ def activate_job():
         Searches for any unprocessed sfn-iot documents and
         then sends a call to the iot handler to process them.
         '''
+        app.logger.debug(f"Processing new IoT Events")
         pass
+
+    def runURL():
+        '''
+        DOES NOTHING AS OF NOW - but will do this eventually:
+        Searches for any unprocessed sfn-url documents and
+        then sends a call to the url handler to process them.
+        '''
+        app.logger.debug(f"Processing new URL Events")
+        pass
+
+    def runAfPoints():
+        '''
+        Gets the AutoFocus points total at the given interval of AF_POOL_TIME
+        '''
+        while True:
+            app.logger.debug("Querying AutoFocus for point totals")
+            updateAfStats()
+            time.sleep(app.config["AF_POOL_TIME"])
 
     # Start the DNS processing routines
     threadDNS = threading.Thread(target=runDNS)
@@ -44,6 +64,12 @@ def activate_job():
     # Start the IoT processing routines
     threadIoT = threading.Thread(target=runIoT)
     threadIoT.start()
+     # Start the URL processing routines
+    threadURL = threading.Thread(target=runURL)
+    threadURL.start()
+     # Start the IoT processing routines
+    threadAF = threading.Thread(target=runAfPoints)
+    threadAF.start()
 
 
 def initBackgroundProcs():
@@ -58,18 +84,31 @@ def initBackgroundProcs():
         app.logger.critical("API Key for Autofocus is not set in .panrc, exiting")
         exit()
 
+    # Check to make sure the config settings for multi-processing is not going
+    # to mess up the AF per minutes point system (must be less than 16)
+    totalProcCount = app.config['DNS_POOL_COUNT'] + app.config['URL_POOL_COUNT']
+    if totalProcCount <= 16:
+        app.logger.info(f"INIT - Starting with total proc count of "
+                        f"{totalProcCount}")
+    else:
+        app.logger.critical(f"INIT - Application may not run correctly with proc "
+                            f"count of {totalProcCount} - you have been warned")
+
     def initProcs():
         not_started = True
-        app.logger.info("Initializing Background Processes")
+        app.logger.info(f"INIT - Initializing Background Processes")
 
         while not_started:
+            flaskHost = app.config['FLASK_HOST']
+            flaskPort = app.config['FLASK_PORT']
             try:
-                req = requests.get('http://127.0.0.1:5000/')
+                req = requests.get(f'http://{flaskHost}:{flaskPort}/')
                 if req.status_code == 200:
-                    #app.logger.info('\nSafeNetworking server started')
+                    app.logger.info(f"INIT - SafeNetworking server started @ "
+                                    f"{flaskHost}:{flaskPort}")
                     not_started = False
             except:
-                app.logger.info('\nServer not yet started')
+                app.logger.info(f"INIT - Server not yet started")
                 time.sleep(2)
 
     thread = threading.Thread(target=initProcs)
@@ -80,5 +119,5 @@ from project.views import *
 
 if __name__ == '__main__':
     initBackgroundProcs()
-    app.logger.info('Background processes initialized')
-    app.run(host="0.0.0.0")
+    app.logger.info(f"INIT - Background processes initialized")
+    app.run(host=app.config['FLASK_HOST'],port=app.config['FLASK_PORT'])

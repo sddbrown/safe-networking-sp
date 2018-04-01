@@ -1,3 +1,23 @@
+# Version 2.1
+Release Date: 30 Mar 2018
+<br/>
+### New Features
+1.) Configurable Flask interface and port bindings<br/>
+2.) Configurable AutoFocus points information threading and execution thresholds<br/>
+3.) Configurable multi-processing<br/>
+4.) Retrieve number of events per domain<br/>
+
+
+
+### Issues resolved
+[doc_created gets manipulated when sfn-domain-details doc is updated](https://github.com/PaloAltoNetworks/safe-networking-sp/issues/31)<br/>
+[Domains per install list](https://github.com/PaloAltoNetworks/safe-networking-sp/issues/19)<br/>
+[Make AutoFocus point updates separate, configurable thread](https://github.com/PaloAltoNetworks/safe-networking-sp/issues/79)<br/>
+[Flask bound to 0.0.0.0 which makes Web service available on TCP :5000](https://github.com/PaloAltoNetworks/safe-networking-sp/issues/85)<br/>
+[Make multi-procs configurable](https://github.com/PaloAltoNetworks/safe-networking-sp/issues/73)<br/>
+[SFN stops if daily AF points go to 0](https://github.com/PaloAltoNetworks/safe-networking-sp/issues/83)<br/>
+
+<br/><br/>
 # Version 2.0.3
 Release Date: 23 Feb 2018
 <br/>
