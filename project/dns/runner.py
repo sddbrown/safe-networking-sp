@@ -35,10 +35,10 @@ def processDNS():
     connections.create_connection(hosts=[app.config['ELASTICSEARCH_HOST']])
 
     # Create search for all unprocessed events
-    eventSearch = Search(index="sfn-dns-event") \
-                .query("match", threat_category="dns") \
-                .query("match", processed=0)  \
-                .sort({"received_at": {"order" : "desc"}})
+    eventSearch = Search(index="threat*") \
+                .query("match", tags="SFN-DNS") \
+                .query("match", "SFN.processed"=0)  \
+                .sort({"@timestamp": {"order" : "desc"}})
 
     # Limit the size of the returned docs to the specified config paramter
     eventSearch = eventSearch[:qSize]
@@ -71,7 +71,7 @@ def processDNS():
     app.logger.debug(f"priDocIds are {priDocIds}")
     app.logger.debug(f"secDocIds are {secDocIds}")
 
-
+    exit()
     # If we aren't in DEBUG mode (.panrc setting)
     if not (app.config['DEBUG_MODE']) or (app.config['AF_POINTS_MODE']):
 
