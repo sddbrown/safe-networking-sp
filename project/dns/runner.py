@@ -23,8 +23,8 @@ def processDNS():
     processed after the primary threats are done.
     '''
     now = datetime.datetime.now()
-    priDocIds = dict()
-    secDocIds = dict()
+    priDocIds = list()
+    secDocIds = list()
     qSize = app.config["DNS_EVENT_QUERY_SIZE"]
     timeLimit = (now - datetime.timedelta(days=app.config['DNS_DOMAIN_INFO_MAX_AGE']))
     updateDetails = False
@@ -35,9 +35,9 @@ def processDNS():
     connections.create_connection(hosts=[app.config['ELASTICSEARCH_HOST']])
 
     # Create search for all unprocessed events
-    eventSearch = Search(index="threat*") \
+    eventSearch = Search(index="threat-*") \
                 .query("match", tags="SFN-DNS") \
-                .query("match", "SFN.processed"=0)  \
+                .query("match", ** { "SFN.processed":0})  \
                 .sort({"@timestamp": {"order" : "desc"}})
 
     # Limit the size of the returned docs to the specified config paramter
@@ -52,26 +52,38 @@ def processDNS():
     # name as the value associated with it
     for hit in searchResponse.hits:
 
+        entry = dict()
+        domainName = hit['SFN']['domain_name']
+        threatName = hit['SFN']['threat_name']
+        eventDoc = hit.meta.id
+        eventIndex = hit.meta.index
+
+        
         # Check to see if we have a domain doc for it already.  If we do,
         # add it to be processed first, if not, add it to the AF lookup
         # queue (secDocIds)
         domainSearch = Search(index="sfn-domain-details") \
-                        .query("match", name=hit.domain_name)
+                        .query("match", name=domainName)
         if domainSearch.execute():
-            priDocIds[hit.meta.id] = hit.domain_name
-            app.logger.debug(f"{hit.meta.id} : {priDocIds[hit.meta.id]} - " +
-                             f"{hit.threat_name}")
+            entry['document'] = eventDoc
+            entry['index'] = eventIndex
+            entry['domain_name'] = domainName
+            priDocIds.append(entry)
+           # app.logger.debug(f"{hit.meta.id} : {priDocIds[hit.meta.id]} - " +
+            #                 f"{threatName}")
 
         else:
-            secDocIds[hit.meta.id] = hit.domain_name
-            app.logger.debug(f"{hit.meta.id} : {secDocIds[hit.meta.id]} - " +
-                             f"{hit.threat_name}")
+            entry['document'] = eventDoc
+            entry['index'] = eventIndex
+            entry['domain_name'] = domainName
+            secDocIds.append(entry)
+            #app.logger.debug(f"{hit.meta.id} : {secDocIds[hit.meta.id]} - " +
+             #                f"{threatName}")
 
 
     app.logger.debug(f"priDocIds are {priDocIds}")
     app.logger.debug(f"secDocIds are {secDocIds}")
-
-    exit()
+    #time.sleep(60)
     # If we aren't in DEBUG mode (.panrc setting)
     if not (app.config['DEBUG_MODE']) or (app.config['AF_POINTS_MODE']):
 
@@ -99,22 +111,22 @@ def processDNS():
     # debugging at a pace that doesn't overload the logs. Load the secondary
     # docs as well, in case we run out of primary while debugging.
     else:
-        for document in priDocIds:
+        for event in priDocIds:
             try:
-                searchDomain(document)
+                results = searchDomain(event)
             except Exception as e:
                 app.logger.error(f"Exception recieved processing document " +
-                                 f"{document}: {e}")
-        for document in secDocIds:
+                                 f"{event['document']}: {e}")
+        for event in secDocIds:
             try:
-                searchDomain(document)
+                results = searchDomain(event)
             except Exception as e:
                 app.logger.error(f"Exception recieved processing document " +
-                                 f"{document}: {e}")
+                                 f"{event['document']}: {e}")
 
 
 
-def searchDomain(eventID):
+def searchDomain(event):
     '''
     Receives the ID of the event doc and gets the domain to search for
     from that doc.  Calls getDomainDoc() and looks at the known tags
@@ -124,11 +136,19 @@ def searchDomain(eventID):
     method.
     '''
     processedValue = 0
-
+    eventID = event['document']
+    eventIndex = event['index']
+    eventDomainName = event['domain_name']
+    # try:
+    #     eventDoc = DNSEventDoc.get(id=eventID,index=eventIndex)
+    # except Exception as e:
+    #     print(e)
     try:
-        eventDoc = DNSEventDoc.get(id=eventID)
-        domainName = eventDoc.domain_name
-        domainDoc = getDomainDoc(domainName)
+        # app.logger.debug(f"eventDoc is {eventDoc}")
+        # domainName = eventDoc.domain_name
+        # app.logger.debug(f"domainName from eventDoc is {eventDoc.domain_name}")
+        domainDoc = getDomainDoc(eventDomainName)
+        app.logger.debug(f"domainDoc is {domainDoc}")
 
 
         if "NULL" in domainDoc:
@@ -150,10 +170,17 @@ def searchDomain(eventID):
                 processedValue = 1
 
             try:
-                eventDoc.event_tag = eventTag
-                eventDoc.updated_at = datetime.datetime.now()
-                eventDoc.processed = processedValue
-                eventDoc.save()
+                eventDoc = DNSEventDoc.get(id=eventID,index=eventIndex)
+                eventDoc.SFN.event_type = "DNSSTUFF"
+                eventDoc.SFN.tag_name = eventTag['tag_name']
+                eventDoc.SFN.public_tag_name = eventTag['public_tag_name']
+                eventDoc.SFN.tag_class = eventTag['tag_class']
+                eventDoc.SFN.confidence_level = eventTag['confidence_level']
+                eventDoc.SFN.sample_date = eventTag['sample_date']
+                eventDoc.SFN.file_type = eventTag['file_type']
+                eventDoc.SFN.updated_at = datetime.datetime.now()
+                eventDoc.SFN.processed = processedValue
+                eventDoc.save(id=eventID,index=eventIndex)
                 app.logger.debug(f"Saved event doc with the following data:" +
                                 f" {eventDoc}")
                 return (f"{eventID} save: SUCCESS")

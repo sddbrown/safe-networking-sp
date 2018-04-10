@@ -45,25 +45,33 @@ class EventTag(InnerDoc):
     sample_date = Date()
     file_type = Text(fields={'raw': Keyword()})
 
-
-class DNSEventDoc(DocType):
-    '''
-    Each event is it's own entity in the DB. This is the structure of that entitiy
-    '''
+class SFNDNS(InnerDoc):
+    event_type = Text()
     domain_name = Text(analyzer='snowball', fields={'raw': Keyword()})
     device_name = Text(analyzer='snowball', fields={'raw': Keyword()})
     host = Text(analyzer='snowball', fields={'raw': Keyword()})
     threat_id = Text(analyzer='snowball')
     threat_name = Text(analyzer='snowball')
-    event_tag = Object(EventTag)
-    created_at = Date()
+    tag_name = Text(fields={'raw': Keyword()})
+    public_tag_name = Text(analyzer='snowball')
+    tag_class = Text(fields={'raw': Keyword()})
+    confidence_level = Integer()
+    sample_date = Date()
+    file_type = Text(fields={'raw': Keyword()})
     updated_at = Date()
     processed = Integer()
     src_ip = Ip()
     dst_ip = Ip()
 
+
+class DNSEventDoc(DocType):
+    '''
+    Each event is it's own entity in the DB. This is the structure of that entitiy
+    '''
+    SFN = Object(SFNDNS)
+    
     class Meta:
-        index = 'sfn-dns-event'
+         index = 'threat-*'
 
     @classmethod
     def get_indexable(cls):
