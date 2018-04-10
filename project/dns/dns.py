@@ -34,16 +34,16 @@ class DomainDetailsDoc(DocType):
         return super(DomainDetailsDoc, self).save(**kwargs)
 
 
-class EventTag(InnerDoc):
-    '''
-    Tag info that is pushed to sfn-dns-event doc
-    '''
-    tag_name = Text(fields={'raw': Keyword()})
-    public_tag_name = Text(analyzer='snowball')
-    tag_class = Text(fields={'raw': Keyword()})
-    confidence_level = Integer()
-    sample_date = Date()
-    file_type = Text(fields={'raw': Keyword()})
+# class EventTag(InnerDoc):
+#     '''
+#     Tag info that is pushed to sfn-dns-event doc
+#     '''
+#     tag_name = Text(fields={'raw': Keyword()})
+#     public_tag_name = Text(analyzer='snowball')
+#     tag_class = Text(fields={'raw': Keyword()})
+#     confidence_level = Integer()
+#     sample_date = Date()
+#     file_type = Text(fields={'raw': Keyword()})
 
 class SFNDNS(InnerDoc):
     event_type = Text()

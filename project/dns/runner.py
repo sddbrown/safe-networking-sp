@@ -2,15 +2,13 @@ import time
 import datetime
 from project import app
 from elasticsearch_dsl import Search
-from multiprocessing import cpu_count
+#from multiprocessing import cpu_count
 from multiprocessing.dummy import Pool
 from project.dns.dns import DNSEventDoc
 from elasticsearch import TransportError
 from elasticsearch_dsl import connections
-from elasticsearch.exceptions import NotFoundError
-from project.dns.dnsutils import getDomainDoc, assessTags, updateAfStats
-
-
+#from elasticsearch.exceptions import NotFoundError
+from project.dns.dnsutils import getDomainDoc, assessTags
 
 
 def processDNS():
@@ -26,9 +24,7 @@ def processDNS():
     priDocIds = list()
     secDocIds = list()
     qSize = app.config["DNS_EVENT_QUERY_SIZE"]
-    timeLimit = (now - datetime.timedelta(days=app.config['DNS_DOMAIN_INFO_MAX_AGE']))
-    updateDetails = False
-
+    
     app.logger.debug(f"Gathering {qSize} sfn-dns-events from ElasticSearch")
 
     # Define the default Elasticsearch client
@@ -40,24 +36,21 @@ def processDNS():
                 .query("match", ** { "SFN.processed":0})  \
                 .sort({"@timestamp": {"order" : "desc"}})
 
-    # Limit the size of the returned docs to the specified config paramter
+    # Limit the size of the returned docs to the specified config paramter and 
+    # then exec the search
     eventSearch = eventSearch[:qSize]
-
-    # Execute the search
     searchResponse = eventSearch.execute()
 
     # For each hit, classify the event as either primary (we have the domain
-    # info cached) or secondary (need to look it up) and add the event ID to the
-    # appropriate dictionary as the key and the domain
-    # name as the value associated with it
+    # info cached) or secondary (need to look it up).
+    # There will be a list for primary and secondary lookups.  Each list
+    # has entries of dictionaires which contain the domain name, the index of
+    # the event and the doc ID for that event.
     for hit in searchResponse.hits:
-
         entry = dict()
         domainName = hit['SFN']['domain_name']
-        threatName = hit['SFN']['threat_name']
         eventDoc = hit.meta.id
         eventIndex = hit.meta.index
-
         
         # Check to see if we have a domain doc for it already.  If we do,
         # add it to be processed first, if not, add it to the AF lookup
@@ -69,21 +62,18 @@ def processDNS():
             entry['index'] = eventIndex
             entry['domain_name'] = domainName
             priDocIds.append(entry)
-           # app.logger.debug(f"{hit.meta.id} : {priDocIds[hit.meta.id]} - " +
-            #                 f"{threatName}")
-
+            
         else:
             entry['document'] = eventDoc
             entry['index'] = eventIndex
             entry['domain_name'] = domainName
             secDocIds.append(entry)
-            #app.logger.debug(f"{hit.meta.id} : {secDocIds[hit.meta.id]} - " +
-             #                f"{threatName}")
-
+            app.logger.debug(f"{eventDoc} : {entry}")
 
     app.logger.debug(f"priDocIds are {priDocIds}")
     app.logger.debug(f"secDocIds are {secDocIds}")
-    #time.sleep(60)
+
+    # The lists are made, now continue to process each entry in the list(s)
     # If we aren't in DEBUG mode (.panrc setting)
     if not (app.config['DEBUG_MODE']) or (app.config['AF_POINTS_MODE']):
 
@@ -96,7 +86,6 @@ def processDNS():
         with Pool(multiProcNum) as pool:
             results = pool.map(searchDomain, priDocIds)
 
-        #updateAfStats()
         app.logger.debug(f"Results for processing primary events {results}")
 
         # Do the same with the generic/secondary keys and pace so we don't kill AF
@@ -104,7 +93,6 @@ def processDNS():
         with Pool(multiProcNum) as pool:
             results = pool.map(searchDomain, secDocIds)
 
-        #updateAfStats()
         app.logger.debug(f"Results for processing AF lookup events {results}")
 
     # This else gets triggered so we only do one document at a time and is for
@@ -114,12 +102,16 @@ def processDNS():
         for event in priDocIds:
             try:
                 results = searchDomain(event)
+                app.logger.debug(f"Results for processing AF lookup events " +
+                                 f"{results}")
             except Exception as e:
                 app.logger.error(f"Exception recieved processing document " +
                                  f"{event['document']}: {e}")
         for event in secDocIds:
             try:
                 results = searchDomain(event)
+                app.logger.debug(f"Results for processing AF lookup events " +
+                                 f"{results}")
             except Exception as e:
                 app.logger.error(f"Exception recieved processing document " +
                                  f"{event['document']}: {e}")
@@ -139,23 +131,19 @@ def searchDomain(event):
     eventID = event['document']
     eventIndex = event['index']
     eventDomainName = event['domain_name']
-    # try:
-    #     eventDoc = DNSEventDoc.get(id=eventID,index=eventIndex)
-    # except Exception as e:
-    #     print(e)
+    
     try:
-        # app.logger.debug(f"eventDoc is {eventDoc}")
-        # domainName = eventDoc.domain_name
-        # app.logger.debug(f"domainName from eventDoc is {eventDoc.domain_name}")
+        app.logger.debug(f"calling getDomainDoc() for {eventDomainName}")
         domainDoc = getDomainDoc(eventDomainName)
         app.logger.debug(f"domainDoc is {domainDoc}")
 
-
         if "NULL" in domainDoc:
             app.logger.warning(f"Unable to process event {eventID} beacause" +
-                               f" of problem with domain doc {domainName}")
+                               f" of problem with domain-doc for" + 
+                               f" {eventDomainName}")
         else:
             app.logger.debug(f"Assessing tags for domain-doc {domainDoc.name}")
+            
             #  Set dummy info if no tags were found
             if (domainDoc.tags == None) or ("2000-01-01T00:00:00" in str(domainDoc.tags)):
                 eventTag = {'tag_name': 'No tags found for domain',
@@ -171,7 +159,7 @@ def searchDomain(event):
 
             try:
                 eventDoc = DNSEventDoc.get(id=eventID,index=eventIndex)
-                eventDoc.SFN.event_type = "DNSSTUFF"
+                eventDoc.SFN.event_type = "DNS"
                 eventDoc.SFN.tag_name = eventTag['tag_name']
                 eventDoc.SFN.public_tag_name = eventTag['public_tag_name']
                 eventDoc.SFN.tag_class = eventTag['tag_class']
@@ -181,9 +169,12 @@ def searchDomain(event):
                 eventDoc.SFN.updated_at = datetime.datetime.now()
                 eventDoc.SFN.processed = processedValue
                 eventDoc.save(id=eventID,index=eventIndex)
+                
                 app.logger.debug(f"Saved event doc with the following data:" +
                                 f" {eventDoc}")
+                
                 return (f"{eventID} save: SUCCESS")
+            
             except TransportError as te:
                 app.logger.error(f"Transport Error working with {eventID}:" +
                                 f" {te.info} ")
