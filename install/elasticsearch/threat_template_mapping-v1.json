@@ -628,6 +628,7 @@
                 }
               },
               "file_type": {
+                "type" : "text",
                 "fields" : {
                   "keyword" : {
                     "type" : "keyword",
