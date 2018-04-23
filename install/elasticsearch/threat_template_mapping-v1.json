@@ -627,10 +627,12 @@
                   }
                 }
               },
-              "fields" : {
-                "keyword" : {
-                  "type" : "keyword",
-                  "ignore_above" : 256
+              "file_type": {
+                "fields" : {
+                  "keyword" : {
+                    "type" : "keyword",
+                    "ignore_above" : 256
+                  }
                 }
               },
               "processed": {
