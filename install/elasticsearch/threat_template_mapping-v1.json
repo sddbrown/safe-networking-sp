@@ -76,17 +76,20 @@
               }
             }
           },
-          "DestinationIP" : { "type" : "ip" },
+          "DestinationIP" : { 
+            "type" : "ip",
+            "fields" : {
+              "keyword" : {
+                "type" : "keyword",
+                "ignore_above" : 256
+              }
+            }
+           },
           "DestinationIPGeo" : {
             "properties" : {
               "city_name" : {
                 "type" : "text",
-                "fields" : {
-                  "keyword" : {
-                    "type" : "keyword",
-                    "ignore_above" : 256
-                  }
-                }
+                
               },
               "continent_code" : {
                 "type" : "text",
@@ -328,7 +331,15 @@
           "NATDestinationPort" : {
             "type" : "integer"
           },
-          "NATSourceIP" : { "type" : "ip" },
+          "NATSourceIP" : { 
+            "type" : "ip",
+            "fields" : {
+              "keyword" : {
+                "type" : "keyword",
+                "ignore_above" : 256
+              }
+            }
+          },
           "NATSourcePort" : {
             "type" : "integer"
           },
@@ -614,6 +625,12 @@
                     "type": "keyword",
                     "ignore_above": 256
                   }
+                }
+              },
+              "fields" : {
+                "keyword" : {
+                  "type" : "keyword",
+                  "ignore_above" : 256
                 }
               },
               "processed": {
